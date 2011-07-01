@@ -27,7 +27,7 @@ instance Functor (RE s) where
     fmap f (RE a) = RE $ fmapNode f a
 
 instance Applicative (RE s) where
-    pure x = RE $ epsNode x
+    pure x = const x <$> RE epsNode
     (RE a1) <*> (RE a2) = RE $ RegexpNode
         { active = False
         , empty = empty a1 <*> empty a2
@@ -48,10 +48,10 @@ zero = Nothing
 
 final r = if active r then final_ r else zero
 
-epsNode :: a -> RegexpNode s r a
-epsNode a = RegexpNode
+epsNode :: RegexpNode s r a
+epsNode = RegexpNode
     { active = False
-    , empty  = Just a
+    , empty  = Just $ error "epsNode"
     , final_ = zero
     , reg    = Eps
     }
