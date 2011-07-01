@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs, Rank2Types #-}
-module RegExp (RE, psym, sym, anySym, (=~)) where
+module RegExp where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative as Applicative
 import Data.Functor.Compose
