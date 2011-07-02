@@ -6,6 +6,7 @@ import Data.Functor.Compose
 import Data.List
 import Control.Monad.Cont
 import Data.Maybe
+import Data.Traversable
 
 newtype RE s a = RE { unRE :: forall r . RegexpNode s r a }
 
@@ -117,5 +118,8 @@ psym p = RE $ symbolNode p
 
 anySym :: RE s s
 anySym = psym (const True)
+
+string :: Eq a => [a] -> RE a [a]
+string = sequenceA . map sym
 
 s =~ (RE r) = match r s
