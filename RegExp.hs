@@ -11,10 +11,12 @@ import qualified Data.Sequence as Sequence
 
 newtype RE s a = RE { unRE :: forall r . RegexpNode s r a }
 
--- An applicative functor similar to Maybe, but it's <|> method honors the
+-- | An applicative functor similar to Maybe, but it's '<|>' method honors
 -- priority.
-data Priority a = Priority { priority :: !(Sequence.Seq Int), pValue :: a } | Fail
+data Priority a = Priority { priority :: !PrSeq, pValue :: a } | Fail
     deriving Functor
+type PrSeq = Sequence.Seq PrNum
+type PrNum = Int
 
 instance Applicative Priority where
     pure x = Priority Sequence.empty x
@@ -33,8 +35,12 @@ instance Alternative Priority where
             EQ -> error "Two priorities are the same! Should not happen."
 
 -- Adds priority to the end
-withPriority :: Int -> Priority a -> Priority a
+withPriority :: PrNum -> Priority a -> Priority a
 withPriority p (Priority ps x) = Priority (ps Sequence.|> p) x
+withPriority _ Fail = Fail
+
+-- Overwrite the priority
+--setPriority :: PrSeq -> Priority a -> Priority a
 
 -- Discards priority information
 priorityToMaybe :: Priority a -> Maybe a
@@ -49,7 +55,15 @@ data Regexp s r a where
     Alt :: RegexpNode s r a -> RegexpNode s r a -> Regexp s r a
     App :: RegexpNode s (a -> r) (a -> b) -> RegexpNode s r a -> Regexp s r b
     Fmap :: (a -> b) -> RegexpNode s r a -> Regexp s r b
-    Rep :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r) a -> Regexp s r b
+    Rep :: (b -> a -> b) -- folding function (like in foldl)
+        -> b             -- the value for zero matches, and also the initial value
+                         -- for the folding function
+        -> RegexpNode s (b, b -> r, PrNum, PrSeq) a
+                         -- Elements for 4-tuple are: the value accumulated so far;
+                         -- continuation; number of iterations for this instance
+                         -- of Rep; and the priority that we had before entering
+                         -- this instance of Rep
+        -> Regexp s r b
 
 data RegexpNode s r a = RegexpNode
     { active :: !Bool
@@ -128,11 +142,11 @@ fmapNode f a = RegexpNode
     , reg = Fmap f a
     }
 
-repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r) a -> RegexpNode s r b
+repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r, PrNum, PrSeq) a -> RegexpNode s r b
 repNode f b a = RegexpNode
     { active = active a
     , empty = pure b
-    , final_ = (\(b, f) -> f b) <$> final a
+    , final_ = (\(b, f, _, _) -> f b) <$> final a
     , reg = Rep f b a
     }
 
@@ -144,7 +158,7 @@ shift k re s =
         Symbol predicate ->
             let f = k <*> if predicate s then pure s else zero
             in re { final_ = f, active = isOK f }
-        Alt a1 a2 -> altNode (shift k a1 s) (shift k a2 s)
+        Alt a1 a2 -> altNode (shift (withPriority 1 k) a1 s) (shift (withPriority 0 k) a2 s)
         App a1 a2 -> appNode
             (shift kc a1 s)
             (shift (kc <*> empty a1 <|> final a1) a2 s)
@@ -152,8 +166,19 @@ shift k re s =
         Fmap f a -> fmapNode f $ shift (fmap (. f) k) a s
         Rep f b a -> repNode f b $ shift k' a s
             where
-            k' = (\(b, k) -> \a -> (f b a, k)) <$>
-                    ((b,) <$> k <|> final a)
+            k' =
+                (\kk -> \a -> (f b a, kk, 1, priority k)) <$>
+                    withPriority 1 k                    <|>
+                (\(b, k, iters, pr) -> \a -> (f b a, k, iters, pr)) <$>
+                    reprioritize (final a)
+
+            reprioritize p =
+                case p of
+                    Fail -> Fail
+                    Priority _ a@(b, k, iters, pr) ->
+                        let iters' = iters+1
+                            pr' = pr Sequence.|> iters'
+                        in iters' `seq` Priority pr' (b, k, iters', pr)
 
 match :: RegexpNode s r r -> [s] -> Maybe r
 match r [] = priorityToMaybe $ empty r
