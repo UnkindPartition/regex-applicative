@@ -135,4 +135,12 @@ anySym = psym (const True)
 string :: Eq a => [a] -> RE a [a]
 string = sequenceA . map sym
 
+reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
+reFoldl f b (RE a) = RE $ RegexpNode
+    { active = False
+    , empty = Just b
+    , final_ = zero
+    , reg = Rep f b a
+    }
+
 s =~ (RE r) = match r s
