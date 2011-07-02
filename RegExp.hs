@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, Rank2Types #-}
+{-# LANGUAGE GADTs, Rank2Types, TupleSections #-}
 module RegExp where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative as Applicative
@@ -16,6 +16,7 @@ data Regexp s r a where
     Alt :: RegexpNode s r a -> RegexpNode s r a -> Regexp s r a
     App :: RegexpNode s (a -> r) (a -> b) -> RegexpNode s r a -> Regexp s r b
     Fmap :: (a -> b) -> RegexpNode s r a -> Regexp s r b
+    Rep :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r) a -> Regexp s r b
 
 data RegexpNode s r a = RegexpNode
     { active :: !Bool
@@ -89,6 +90,14 @@ fmapNode f a = RegexpNode
     , reg = Fmap f a
     }
 
+repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r) a -> RegexpNode s r b
+repNode f b a = RegexpNode
+    { active = active a
+    , empty = Just b
+    , final_ = (\(b, f) -> f b) <$> final a
+    , reg = Rep f b a
+    }
+
 shift :: Maybe (a -> r) -> RegexpNode s r a -> s -> RegexpNode s r a
 shift Nothing r _ | not $ active r = r
 shift k re s =
@@ -103,6 +112,10 @@ shift k re s =
             (shift (kc <*> empty a1 <|> final a1) a2 s)
             where kc = fmap (.) k
         Fmap f a -> fmapNode f $ shift (fmap (. f) k) a s
+        Rep f b a -> repNode f b $ shift k' a s
+            where
+            k' = (\(b, k) -> \a -> (f b a, k)) <$>
+                    ((b,) <$> k <|> final a)
 
 match :: RegexpNode s r r -> [s] -> Maybe r
 match r [] = empty r
