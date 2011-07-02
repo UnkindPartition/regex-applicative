@@ -26,9 +26,15 @@ re3 = sequenceA $
       pure 7 <|>
       pure 5 <* sym True ]
 
+re4 = sym True *> many (sym False) <* sym True
+
+re5 = (sym () <|> sym () *> sym ()) *> many (sym ())
+
 prop re s = reference re s == s =~ re
 
 main = do
    smallCheck 10 $ prop re1
    smallCheck 10 $ prop re2
    smallCheck 10 $ prop re3
+   smallCheck 10 $ prop re4
+   smallCheck 10 $ prop re5
