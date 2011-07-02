@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, Rank2Types, TupleSections #-}
+{-# LANGUAGE GADTs, Rank2Types, TupleSections, DeriveFunctor #-}
 module RegExp where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative as Applicative
@@ -7,8 +7,41 @@ import Data.List
 import Control.Monad.Cont
 import Data.Maybe
 import Data.Traversable
+import qualified Data.Sequence as Sequence
 
 newtype RE s a = RE { unRE :: forall r . RegexpNode s r a }
+
+-- An applicative functor similar to Maybe, but it's <|> method honors the
+-- priority.
+data Priority a = Priority { priority :: !(Sequence.Seq Int), pValue :: a } | Fail
+    deriving Functor
+
+instance Applicative Priority where
+    pure x = Priority Sequence.empty x
+    Priority p1 f <*> Priority p2 x = Priority (p1 Sequence.>< p2) (f x)
+    _ <*> _ = Fail
+
+instance Alternative Priority where
+    empty = Fail
+    p@Priority {} <|> Fail = p
+    Fail <|> p@Priority {} = p
+    Fail <|> Fail = Fail
+    p1@Priority {} <|> p2@Priority {} =
+        case compare (priority p1) (priority p2) of
+            LT -> p2
+            GT -> p1
+            EQ -> error "Two priorities are the same! Should not happen."
+
+-- Adds priority to the end
+withPriority :: Int -> Priority a -> Priority a
+withPriority p (Priority ps x) = Priority (ps Sequence.|> p) x
+
+-- Discards priority information
+priorityToMaybe :: Priority a -> Maybe a
+priorityToMaybe p =
+    case p of
+        Priority { pValue = x } -> Just x
+        Fail -> Nothing
 
 data Regexp s r a where
     Eps :: Regexp s r a
@@ -20,8 +53,8 @@ data Regexp s r a where
 
 data RegexpNode s r a = RegexpNode
     { active :: !Bool
-    , empty  :: !(Maybe a)
-    , final_ :: !(Maybe r)
+    , empty  :: !(Priority a)
+    , final_ :: !(Priority r)
     , reg    :: !(Regexp s r a)
     }
 
@@ -47,14 +80,18 @@ instance Alternative (RE s) where
     empty = error "noMatch" <$> psym (const False)
     many a = reverse <$> reFoldl (flip (:)) [] a
 
-zero = Nothing
+zero = Fail
+isOK p =
+    case p of
+        Fail -> False
+        Priority {} -> True
 
 final r = if active r then final_ r else zero
 
 epsNode :: RegexpNode s r a
 epsNode = RegexpNode
     { active = False
-    , empty  = Just $ error "epsNode"
+    , empty  = pure $ error "epsNode"
     , final_ = zero
     , reg    = Eps
     }
@@ -94,19 +131,19 @@ fmapNode f a = RegexpNode
 repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r) a -> RegexpNode s r b
 repNode f b a = RegexpNode
     { active = active a
-    , empty = Just b
+    , empty = pure b
     , final_ = (\(b, f) -> f b) <$> final a
     , reg = Rep f b a
     }
 
-shift :: Maybe (a -> r) -> RegexpNode s r a -> s -> RegexpNode s r a
-shift Nothing r _ | not $ active r = r
+shift :: Priority (a -> r) -> RegexpNode s r a -> s -> RegexpNode s r a
+shift Fail r _ | not $ active r = r
 shift k re s =
     case reg re of
         Eps -> re
         Symbol predicate ->
-            let f = k <*> if predicate s then Just s else Nothing
-            in re { final_ = f, active = isJust f }
+            let f = k <*> if predicate s then pure s else zero
+            in re { final_ = f, active = isOK f }
         Alt a1 a2 -> altNode (shift k a1 s) (shift k a2 s)
         App a1 a2 -> appNode
             (shift kc a1 s)
@@ -119,9 +156,9 @@ shift k re s =
                     ((b,) <$> k <|> final a)
 
 match :: RegexpNode s r r -> [s] -> Maybe r
-match r [] = empty r
-match r (s:ss) = final $
-    foldl' (\r s -> shift Nothing r s) (shift (Just id) r s) ss
+match r [] = priorityToMaybe $ empty r
+match r (s:ss) = priorityToMaybe $ final $
+    foldl' (\r s -> shift zero r s) (shift (pure id) r s) ss
 
 -- user interface
 sym :: Eq s => s -> RE s s
@@ -139,7 +176,7 @@ string = sequenceA . map sym
 reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
 reFoldl f b (RE a) = RE $ RegexpNode
     { active = False
-    , empty = Just b
+    , empty = pure b
     , final_ = zero
     , reg = Rep f b a
     }
