@@ -184,9 +184,9 @@ shift k re s =
                             pr' = pr Sequence.|> iters'
                         in iters' `seq` Priority pr' (b, k, iters', pr)
 
-match :: RegexpNode s r r -> [s] -> Maybe r
-match r [] = priorityToMaybe $ empty r
-match r (s:ss) = priorityToMaybe $ final $
+match :: RegexpNode s r r -> [s] -> Priority r
+match r [] = empty r
+match r (s:ss) = final $
     foldl' (\r s -> shift zero r s) (shift (pure id) r s) ss
 
 -- user interface
@@ -210,4 +210,4 @@ reFoldl f b (RE a) = RE $ RegexpNode
     , reg = Rep f b a
     }
 
-s =~ (RE r) = match r s
+s =~ (RE r) = priorityToMaybe $ match r s
