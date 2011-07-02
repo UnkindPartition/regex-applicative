@@ -32,7 +32,9 @@ instance Alternative Priority where
         case compare (priority p1) (priority p2) of
             LT -> p2
             GT -> p1
-            EQ -> error "Two priorities are the same! Should not happen."
+            EQ -> error $
+                "Two priorities are the same! Should not happen.\n" ++ show (priority p1)
+
 
 -- Adds priority to the end
 withPriority :: PrNum -> Priority a -> Priority a
