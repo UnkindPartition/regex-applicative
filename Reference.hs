@@ -45,6 +45,10 @@ re2monad r =
         Alt a1 a2 -> re2monad a1 <|> re2monad a2
         App a1 a2 -> re2monad a1 <*> re2monad a2
         Fmap f a -> fmap f $ re2monad a
+        Rep f b a -> rep b
+            where
+            am = re2monad a
+            rep b = (do a <- am; rep $ f b a) <|> return b
 
 runP :: P s a -> [s] -> Maybe a
 runP m s = case filter (null . snd) $ unP m s of
