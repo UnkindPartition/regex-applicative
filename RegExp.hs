@@ -89,7 +89,7 @@ instance Applicative (RE s) where
 instance Alternative (RE s) where
     (RE a1) <|> (RE a2) = RE $ RegexpNode
         { active = False
-        , empty = empty a1 <|> empty a2
+        , empty = empty a1 `emptyChoice` empty a2
         , final_ = zero
         , reg = Alt a1 a2
         }
@@ -101,6 +101,8 @@ isOK p =
     case p of
         Fail -> False
         Priority {} -> True
+emptyChoice p@Priority {} _ = p
+emptyChoice _ p = p
 
 final r = if active r then final_ r else zero
 
@@ -123,7 +125,7 @@ symbolNode c = RegexpNode
 altNode :: RegexpNode s r a -> RegexpNode s r a -> RegexpNode s r a
 altNode a1 a2 = RegexpNode
     { active = active a1 || active a2
-    , empty  = empty a1 <|> empty a2
+    , empty  = empty a1 `emptyChoice` empty a2
     , final_ = final a1 <|> final a2
     , reg    = Alt a1 a2
     }
@@ -147,7 +149,7 @@ fmapNode f a = RegexpNode
 repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r, PrNum, PrSeq) a -> RegexpNode s r b
 repNode f b a = RegexpNode
     { active = active a
-    , empty = pure b
+    , empty = withPriority 0 $ pure b
     , final_ = (\(b, f, _, _) -> f b) <$> final a
     , reg = Rep f b a
     }
