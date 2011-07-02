@@ -30,6 +30,8 @@ re4 = sym True *> many (sym False) <* sym True
 
 re5 = (sym () <|> sym () *> sym ()) *> many (sym ())
 
+re6 = many (pure 3 <* sym () <* sym () <* sym () <|> pure 1 <* sym ())
+
 prop re s = reference re s == s =~ re
 
 main = do
@@ -38,3 +40,4 @@ main = do
    smallCheck 10 $ prop re3
    smallCheck 10 $ prop re4
    smallCheck 10 $ prop re5
+   smallCheck 10 $ prop re6
