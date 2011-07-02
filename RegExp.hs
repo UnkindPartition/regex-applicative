@@ -45,6 +45,7 @@ instance Alternative (RE s) where
         , reg = Alt a1 a2
         }
     empty = error "noMatch" <$> psym (const False)
+    many a = reverse <$> reFoldl (flip (:)) [] a
 
 zero = Nothing
 
