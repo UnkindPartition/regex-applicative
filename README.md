@@ -34,7 +34,7 @@ Other resources
       how this works
 
 
-[haddock]: http://hackage.haskell.org/packages/archive/regex-applicative/0.1/doc/html/Text-Regex-Applicative.html
+[haddock]: http://hackage.haskell.org/packages/archive/regex-applicative/latest/doc/html/Text-Regex-Applicative.html
 [hackage]: http://hackage.haskell.org/package/regex-applicative
 [issues]: https://github.com/feuerbach/regex-applicative/issues
 [github]: https://github.com/feuerbach/regex-applicative
