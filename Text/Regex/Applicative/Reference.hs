@@ -1,3 +1,15 @@
+--------------------------------------------------------------------
+-- |
+-- Module    : Text.Regex.Applicative.Reference
+-- Copyright : (c) Roman Cheplyaka
+-- License   : MIT
+--
+-- Maintainer: Roman Cheplyaka <roma@ro-che.info>
+-- Stability : experimental
+--
+-- Reference implementation (using backtracking)
+--------------------------------------------------------------------
+
 {-# LANGUAGE GADTs #-}
 module Text.Regex.Applicative.Reference (reference) where
 import Prelude hiding (getChar)
@@ -6,7 +18,6 @@ import Text.Regex.Applicative.Interface
 import Control.Applicative
 import Control.Monad
 
--- Reference implementation (using backtracking)
 
 -- A simple parsing monad
 newtype P s a = P { unP :: [s] -> [(a, [s])] }
@@ -54,5 +65,9 @@ runP m s = case filter (null . snd) $ unP m s of
     (r, _) : _ -> Just r
     _ -> Nothing
 
+-- | 'reference' @r@ @s@ should give the same results as @s@ '=~' @r@.
+--
+-- However, this is not very efficient implementation and is supposed to be
+-- used for testing only.
 reference :: RE s a -> [s] -> Maybe a
 reference (RE r) s = runP (re2monad r) s
