@@ -60,11 +60,9 @@ data Regexp s r a where
     Rep :: (b -> a -> b) -- folding function (like in foldl)
         -> b             -- the value for zero matches, and also the initial value
                          -- for the folding function
-        -> RegexpNode s (b, b -> r, PrNum, PrSeq) a
-                         -- Elements for 4-tuple are: the value accumulated so far;
-                         -- continuation; number of iterations for this instance
-                         -- of Rep; and the priority that we had before entering
-                         -- this instance of Rep
+        -> RegexpNode s (b, b -> r) a
+                         -- Elements of the 2-tuple are the value accumulated so far
+                         -- and the continuation
         -> Regexp s r b
 
 data RegexpNode s r a = RegexpNode
@@ -146,11 +144,11 @@ fmapNode f a = RegexpNode
     , reg = Fmap f a
     }
 
-repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r, PrNum, PrSeq) a -> RegexpNode s r b
+repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r) a -> RegexpNode s r b
 repNode f b a = RegexpNode
     { active = active a
     , empty = withPriority 0 $ pure b
-    , final_ = (\(b, f, _, _) -> f b) <$> final a
+    , final_ = withPriority 0 $ (\(b, f) -> f b) <$> final a
     , reg = Rep f b a
     }
 
@@ -170,19 +168,9 @@ shift k re s =
         Fmap f a -> fmapNode f $ shift (fmap (. f) k) a s
         Rep f b a -> repNode f b $ shift k' a s
             where
-            k' =
-                (\kk -> \a -> (f b a, kk, 1, priority k)) <$>
-                    withPriority 1 k                    <|>
-                (\(b, k, iters, pr) -> \a -> (f b a, k, iters, pr)) <$>
-                    reprioritize (final a)
-
-            reprioritize p =
-                case p of
-                    Fail -> Fail
-                    Priority _ a@(b, k, iters, pr) ->
-                        let iters' = iters+1
-                            pr' = pr Sequence.|> iters'
-                        in iters' `seq` Priority pr' (b, k, iters', pr)
+            k' = withPriority 1 $
+                    (\(b, k) -> \a -> (f b a, k)) <$>
+                        ((b,) <$> k <|> final a)
 
 match :: RegexpNode s r r -> [s] -> Priority r
 match r [] = empty r
