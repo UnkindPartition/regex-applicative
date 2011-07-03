@@ -99,8 +99,8 @@ isOK p =
     case p of
         Fail -> False
         Priority {} -> True
-emptyChoice p@Priority {} _ = p
-emptyChoice _ p = p
+
+emptyChoice p1 p2 = withPriority 1 p1 <|> withPriority 0 p2
 
 final r = if active r then final_ r else zero
 
