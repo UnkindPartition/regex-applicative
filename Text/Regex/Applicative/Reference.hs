@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
-module Reference (reference) where
+module Text.Regex.Applicative.Reference (reference) where
 import Prelude hiding (getChar)
-import RegExp hiding (empty)
+import Text.Regex.Applicative.Implementation hiding (empty)
 import Control.Applicative
 import Control.Arrow
 import Control.Monad

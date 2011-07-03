@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns #-}
-import RegExp
-import Reference
+import Text.Regex.Applicative
+import Text.Regex.Applicative.Reference
 import Control.Applicative
 import Control.Monad
 import Test.SmallCheck

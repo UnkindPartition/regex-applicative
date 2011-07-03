@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs, Rank2Types, TupleSections, DeriveFunctor #-}
-module RegExp where
+module Text.Regex.Applicative.Implementation where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative as Applicative
 import Data.Functor.Compose
