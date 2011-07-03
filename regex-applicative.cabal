@@ -13,7 +13,9 @@ Version:             0.1
 Synopsis:            Regex-based parsing with applicative interface
 
 -- A longer description of the package.
--- Description:         
+Description:         
+    regex-applicative is a Haskell library for parsing using regular expressions.
+    Parsers can be built using Applicative interface.
 
 -- URL for the project homepage or repository.
 Homepage:            https://github.com/feuerbach/regex-applicative
@@ -43,8 +45,16 @@ Build-type:          Simple
 Extra-source-files:  README.md CREDITS.md test.hs
 
 -- Constraint on the version of Cabal needed to build this package.
-Cabal-version:       >=1.2
+Cabal-version:       >=1.6
 
+Source-repository head
+  type:     git
+  location: git://github.com/feuerbach/regex-applicative.git
+
+Source-repository this
+  type:     git
+  location: git://github.com/feuerbach/regex-applicative.git
+  tag:      v0.1
 
 Library
   -- Modules exported by the library.
