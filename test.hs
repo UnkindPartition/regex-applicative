@@ -2,8 +2,10 @@
 import RegExp
 import Reference
 import Control.Applicative
+import Control.Monad
 import Test.SmallCheck
 import Data.Traversable
+import Text.Printf
 
 -- Small alphabets as SmallCheck's series
 newtype A = A { a :: Char } deriving Show
@@ -59,11 +61,22 @@ re7 =
 
 prop re f (map f -> s) = reference re s == s =~ re
 
+tests =
+   [ depthCheck 10 $ prop re1 a
+   , depthCheck 10 $ prop re2 ab
+   , depthCheck 10 $ prop re3 ab
+   , depthCheck 10 $ prop re4 ab
+   , depthCheck 10 $ prop re5 a
+   , depthCheck 10 $ prop re6 a
+   , depthCheck 7  $ prop re7 abc
+   ]
+
 main = do
-   smallCheck 10 $ prop re1 a
-   smallCheck 10 $ prop re2 ab
-   smallCheck 10 $ prop re3 ab
-   smallCheck 10 $ prop re4 ab
-   smallCheck 10 $ prop re5 a
-   smallCheck 10 $ prop re6 a
-   smallCheck 7 $ prop re7 abc
+    foldM runTest (1 :: Int) tests
+    return ()
+    where
+    runTest n test = do
+        printf "Running test case %d...\n" n
+        test
+        printf "\n"
+        return $ n+1
