@@ -5,6 +5,8 @@ import qualified Control.Applicative
 import Data.Traversable
 import Text.Regex.Applicative.Implementation
 
+-- | Type of regular expressions that recognize symbols of type @s@ and
+-- produce a result of type @a@
 newtype RE s a = RE { unRE :: forall r . RegexpNode s r a }
 
 instance Functor (RE s) where
@@ -29,18 +31,24 @@ instance Alternative (RE s) where
     empty = error "noMatch" <$> psym (const False)
     many a = reverse <$> reFoldl (flip (:)) [] a
 
+-- | Matches and returns a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
 psym p = RE $ symbolNode p
 
+-- | Matches and returns the given symbol
 sym :: Eq s => s -> RE s s
 sym s = psym (s ==)
 
+-- | Matches and returns any single symbol
 anySym :: RE s s
 anySym = psym (const True)
 
+-- | Matches and returns the given sequence of symbols
 string :: Eq a => [a] -> RE a [a]
 string = sequenceA . map sym
 
+-- | Greedily matches zero or more symbols, which are combined using the given
+-- folding function
 reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
 reFoldl f b (RE a) = RE $ RegexpNode
     { active = False
@@ -49,4 +57,6 @@ reFoldl f b (RE a) = RE $ RegexpNode
     , reg = Rep f b a
     }
 
+-- | Attempts to match a string of symbols against the regular expression
+(=~) :: [s] -> RE s a -> Maybe a
 s =~ (RE r) = priorityToMaybe $ match r s
