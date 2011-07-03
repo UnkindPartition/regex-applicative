@@ -1,15 +1,9 @@
-{-# LANGUAGE GADTs, Rank2Types, TupleSections, DeriveFunctor #-}
+{-# LANGUAGE GADTs, TupleSections, DeriveFunctor #-}
 module Text.Regex.Applicative.Implementation where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative as Applicative
-import Data.Functor.Compose
 import Data.List
-import Control.Monad.Cont
-import Data.Maybe
-import Data.Traversable
 import qualified Data.Sequence as Sequence
-
-newtype RE s a = RE { unRE :: forall r . RegexpNode s r a }
 
 -- | An applicative functor similar to Maybe, but it's '<|>' method honors
 -- priority.
@@ -71,28 +65,6 @@ data RegexpNode s r a = RegexpNode
     , final_ :: !(Priority r)
     , reg    :: !(Regexp s r a)
     }
-
-instance Functor (RE s) where
-    fmap f (RE a) = RE $ fmapNode f a
-
-instance Applicative (RE s) where
-    pure x = const x <$> RE epsNode
-    (RE a1) <*> (RE a2) = RE $ RegexpNode
-        { active = False
-        , empty = empty a1 <*> empty a2
-        , final_ = zero
-        , reg = App a1 a2
-        }
-
-instance Alternative (RE s) where
-    (RE a1) <|> (RE a2) = RE $ RegexpNode
-        { active = False
-        , empty = empty a1 `emptyChoice` empty a2
-        , final_ = zero
-        , reg = Alt a1 a2
-        }
-    empty = error "noMatch" <$> psym (const False)
-    many a = reverse <$> reFoldl (flip (:)) [] a
 
 zero = Fail
 isOK p =
@@ -176,26 +148,3 @@ match :: RegexpNode s r r -> [s] -> Priority r
 match r [] = empty r
 match r (s:ss) = final $
     foldl' (\r s -> shift zero r s) (shift (pure id) r s) ss
-
--- user interface
-sym :: Eq s => s -> RE s s
-sym s = psym (s ==)
-
-psym :: (s -> Bool) -> RE s s
-psym p = RE $ symbolNode p
-
-anySym :: RE s s
-anySym = psym (const True)
-
-string :: Eq a => [a] -> RE a [a]
-string = sequenceA . map sym
-
-reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
-reFoldl f b (RE a) = RE $ RegexpNode
-    { active = False
-    , empty = pure b
-    , final_ = zero
-    , reg = Rep f b a
-    }
-
-s =~ (RE r) = priorityToMaybe $ match r s

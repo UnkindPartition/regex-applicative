@@ -2,10 +2,9 @@
 module Text.Regex.Applicative.Reference (reference) where
 import Prelude hiding (getChar)
 import Text.Regex.Applicative.Implementation hiding (empty)
+import Text.Regex.Applicative.Interface
 import Control.Applicative
-import Control.Arrow
 import Control.Monad
-import Data.Maybe
 
 -- Reference implementation (using backtracking)
 

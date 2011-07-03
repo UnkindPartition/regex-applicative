@@ -1,4 +1,12 @@
 module Text.Regex.Applicative
-    (module Text.Regex.Applicative.Implementation)
+    ( RE
+    , sym
+    , psym
+    , anySym
+    , reFoldl
+    , (=~)
+    , module Control.Applicative
+    )
     where
-import Text.Regex.Applicative.Implementation
+import Text.Regex.Applicative.Interface
+import Control.Applicative
