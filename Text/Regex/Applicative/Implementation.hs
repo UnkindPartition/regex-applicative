@@ -8,7 +8,7 @@ import qualified Data.Sequence as Sequence
 -- | An applicative functor similar to Maybe, but it's '<|>' method honors
 -- priority.
 data Priority a = Priority { priority :: !PrSeq, pValue :: a } | Fail
-    deriving Functor
+    deriving (Functor, Show)
 type PrSeq = Sequence.Seq PrNum
 type PrNum = Int
 
