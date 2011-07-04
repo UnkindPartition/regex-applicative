@@ -36,20 +36,10 @@ instance Functor (RE s) where
 
 instance Applicative (RE s) where
     pure x = const x <$> RE epsNode
-    (RE a1) <*> (RE a2) = RE $ RegexpNode
-        { active = False
-        , empty = empty a1 <*> empty a2
-        , final_ = zero
-        , reg = App a1 a2
-        }
+    (RE a1) <*> (RE a2) = RE $ appNode a1 a2
 
 instance Alternative (RE s) where
-    (RE a1) <|> (RE a2) = RE $ RegexpNode
-        { active = False
-        , empty = empty a1 `emptyChoice` empty a2
-        , final_ = zero
-        , reg = Alt a1 a2
-        }
+    (RE a1) <|> (RE a2) = RE $ altNode a1 a2
     empty = error "noMatch" <$> psym (const False)
     many a = reverse <$> reFoldl (flip (:)) [] a
 
@@ -72,12 +62,7 @@ string = sequenceA . map sym
 -- | Greedily matches zero or more symbols, which are combined using the given
 -- folding function
 reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
-reFoldl f b (RE a) = RE $ RegexpNode
-    { active = False
-    , empty = pure b
-    , final_ = zero
-    , reg = Rep f b a
-    }
+reFoldl f b (RE a) = RE $ repNode f b a
 
 -- | Attempts to match a string of symbols against the regular expression
 (=~) :: [s] -> RE s a -> Maybe a
