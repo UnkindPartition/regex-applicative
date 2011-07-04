@@ -70,3 +70,4 @@ Library
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         
   
+  GHC-Options:     -Wall -fno-warn-name-shadowing -fno-warn-missing-signatures
