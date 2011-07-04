@@ -7,6 +7,8 @@ Name:                regex-applicative
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
+
+-- DO NOT FORGET TO UPDATE THE GIT TAG BELOW!!!
 Version:             0.1.1
 
 -- A short (one-line) description of the package.
@@ -42,7 +44,7 @@ Build-type:          Simple
 
 -- Extra files to be distributed with the package, such as examples or
 -- a README.
-Extra-source-files:  README.md CREDITS.md test.hs
+Extra-source-files:  README.md CREDITS.md test.hs CHANGES.md
 
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.6
@@ -54,7 +56,7 @@ Source-repository head
 Source-repository this
   type:     git
   location: git://github.com/feuerbach/regex-applicative.git
-  tag:      v0.1
+  tag:      v0.1.1
 
 Library
   -- Modules exported by the library.
