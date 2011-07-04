@@ -58,6 +58,7 @@ re7 =
         many ((,,,) <$> many_A_or_B <*> sym 'c' <*> many_A_or_B <*> sym 'c') <*>
         many_A_or_B
 
+re8 = (,) <$> many (sym 'a' <|> sym 'b') <*> many (sym 'b' <|> sym 'c')
 
 prop re f (map f -> s) = reference re s == s =~ re
 
@@ -69,6 +70,7 @@ tests =
    , depthCheck 10 $ prop re5 a
    , depthCheck 10 $ prop re6 a
    , depthCheck 7  $ prop re7 abc
+   , depthCheck 7  $ prop re8 abc
    ]
 
 main = do
