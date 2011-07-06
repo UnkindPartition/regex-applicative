@@ -4,6 +4,7 @@ import Control.Applicative hiding (empty)
 import qualified Control.Applicative
 import Data.Traversable
 import Text.Regex.Applicative.Implementation
+import Text.Regex.Applicative.Priorities
 
 -- | Type of regular expressions that recognize symbols of type @s@ and
 -- produce a result of type @a@.

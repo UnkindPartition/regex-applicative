@@ -2,47 +2,7 @@
 module Text.Regex.Applicative.Implementation where
 import Control.Applicative
 import Data.List
-import qualified Data.Sequence as Sequence
-
--- | An applicative functor similar to Maybe, but it's '<|>' method honors
--- priority.
-data Priority a = Priority { priority :: !PrSeq, pValue :: a } | Fail
-    deriving (Functor, Show)
-type PrSeq = Sequence.Seq PrNum
-type PrNum = Int
-
-instance Applicative Priority where
-    pure x = Priority Sequence.empty x
-    Priority p1 f <*> Priority p2 x = Priority (p1 Sequence.>< p2) (f x)
-    _ <*> _ = Fail
-
-instance Alternative Priority where
-    empty = Fail
-    p@Priority {} <|> Fail = p
-    Fail <|> p@Priority {} = p
-    Fail <|> Fail = Fail
-    p1@Priority {} <|> p2@Priority {} =
-        case compare (priority p1) (priority p2) of
-            LT -> p2
-            GT -> p1
-            EQ -> error $
-                "Two priorities are the same! Should not happen.\n" ++ show (priority p1)
-
-
--- Adds priority to the end
-withPriority :: PrNum -> Priority a -> Priority a
-withPriority p (Priority ps x) = Priority (ps Sequence.|> p) x
-withPriority _ Fail = Fail
-
--- Overwrite the priority
---setPriority :: PrSeq -> Priority a -> Priority a
-
--- Discards priority information
-priorityToMaybe :: Priority a -> Maybe a
-priorityToMaybe p =
-    case p of
-        Priority { pValue = x } -> Just x
-        Fail -> Nothing
+import Text.Regex.Applicative.Priorities
 
 data Regexp s r a where
     Eps :: Regexp s r a
@@ -64,11 +24,6 @@ data RegexpNode s r a = RegexpNode
     , final_ :: !(Priority r)
     , reg    :: !(Regexp s r a)
     }
-
-isOK p =
-    case p of
-        Fail -> False
-        Priority {} -> True
 
 emptyChoice p1 p2 = withPriority 1 p1 <|> withPriority 0 p2
 
@@ -123,7 +78,7 @@ repNode f b a = RegexpNode
     }
 
 shift :: Priority (a -> r) -> RegexpNode s r a -> s -> RegexpNode s r a
-shift Fail r _ | not $ active r = r
+shift k r _ | not (active r) && not (isOK k) = r
 shift k re s =
     case reg re of
         Eps -> re
