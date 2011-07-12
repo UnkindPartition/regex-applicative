@@ -63,7 +63,8 @@ Library
   Exposed-modules:     Text.Regex.Applicative, Text.Regex.Applicative.Reference
   
   -- Packages needed in order to build this package.
-  Build-depends:       base == 4.3.*, containers == 0.3.*
+  Build-depends:       base == 4.3.*,
+                       containers >= 0.3 && < 0.5
   
   -- Modules not exported by this package.
   Other-modules:       Text.Regex.Applicative.Interface,
