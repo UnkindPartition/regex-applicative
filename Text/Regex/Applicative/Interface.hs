@@ -68,3 +68,4 @@ reFoldl f b (RE a) = RE $ repNode f b a
 -- | Attempts to match a string of symbols against the regular expression
 (=~) :: [s] -> RE s a -> Maybe a
 s =~ (RE r) = priorityToMaybe $ match r s
+infix 2 =~
