@@ -68,7 +68,7 @@ Library
                        Text.Regex.Applicative.Reference
   
   -- Modules not exported by this package.
-  Other-modules:       Text.Regex.Applicative.Interface,
+  Other-modules:       Text.Regex.Applicative.Interface
                        Text.Regex.Applicative.Implementation
                        Text.Regex.Applicative.Priorities
   
