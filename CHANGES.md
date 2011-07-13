@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.1.3
+-----
+* Fix a .cabal-file issue introduced in 0.1.2
+* Change the fixity of =~
+
 0.1.2
 -----
 * Relax the constraint on the containers version
