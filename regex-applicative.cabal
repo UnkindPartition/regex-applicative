@@ -59,16 +59,18 @@ Source-repository this
   tag:      v0.1.2
 
 Library
-  -- Modules exported by the library.
-  Exposed-modules:     Text.Regex.Applicative, Text.Regex.Applicative.Reference
-  
   -- Packages needed in order to build this package.
   Build-depends:       base == 4.3.*,
                        containers >= 0.3 && < 0.5
+
+  -- Modules exported by the library.
+  Exposed-modules:     Text.Regex.Applicative
+                       Text.Regex.Applicative.Reference
   
   -- Modules not exported by this package.
   Other-modules:       Text.Regex.Applicative.Interface,
                        Text.Regex.Applicative.Implementation
+                       Text.Regex.Applicative.Priorities
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         
