@@ -60,7 +60,7 @@ re7 =
 
 re8 = (,) <$> many (sym 'a' <|> sym 'b') <*> many (sym 'b' <|> sym 'c')
 
-prop re f (map f -> s) = reference re s == s =~ re
+prop re f (map f -> s) = reference re s == (s =~ re)
 
 tests =
    [ depthCheck 10 $ prop re1 a
