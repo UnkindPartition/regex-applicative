@@ -60,7 +60,7 @@ Source-repository this
 
 Library
   -- Packages needed in order to build this package.
-  Build-depends:       base == 4.3.*,
+  Build-depends:       base >= 4.2 && < 4.4,
                        containers >= 0.3 && < 0.5
 
   -- Modules exported by the library.
