@@ -14,6 +14,7 @@ module Text.Regex.Applicative
     , sym
     , psym
     , anySym
+    , string
     , reFoldl
     , (=~)
     , module Control.Applicative
