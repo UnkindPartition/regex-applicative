@@ -7,18 +7,17 @@ module Text.Regex.Applicative.Priorities
     , isOK
     ) where
 import Control.Applicative
-import qualified Data.Sequence as Sequence
 
 -- | An applicative functor similar to Maybe, but it's '<|>' method honors
 -- priority.
-data Priority a = Priority { priority :: !PrSeq, pValue :: a } | Fail
+data Priority a = Priority { priority :: PrSeq, pValue :: a } | Fail
     deriving (Functor, Show)
-type PrSeq = Sequence.Seq PrNum
+type PrSeq = [PrNum]
 type PrNum = Int
 
 instance Applicative Priority where
-    pure x = Priority Sequence.empty x
-    Priority p1 f <*> Priority p2 x = Priority (p1 Sequence.>< p2) (f x)
+    pure x = Priority [] x
+    Priority p1 f <*> Priority p2 x = Priority ({-# SCC "concat_priorities" #-} p1 ++ p2) (f x)
     _ <*> _ = Fail
 
 instance Alternative Priority where
@@ -35,7 +34,7 @@ instance Alternative Priority where
 
 -- | Adds priority to the end
 withPriority :: PrNum -> Priority a -> Priority a
-withPriority p (Priority ps x) = Priority (ps Sequence.|> p) x
+withPriority p (Priority ps x) = Priority ({-# SCC "snoc_priorities" #-}ps ++ [p]) x
 withPriority _ Fail = Fail
 
 -- | Discards priority information
