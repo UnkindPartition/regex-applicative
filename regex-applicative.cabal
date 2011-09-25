@@ -61,7 +61,10 @@ Source-repository this
 Library
   -- Packages needed in order to build this package.
   Build-depends:       base >= 4.2 && < 4.4,
-                       containers >= 0.3 && < 0.5
+                       containers >= 0.3 && < 0.5,
+                       monads-tf == 0.1.*,
+                       vector == 0.7.*
+
 
   -- Modules exported by the library.
   Exposed-modules:     Text.Regex.Applicative
@@ -70,7 +73,7 @@ Library
   -- Modules not exported by this package.
   Other-modules:       Text.Regex.Applicative.Interface
                        Text.Regex.Applicative.Implementation
-                       Text.Regex.Applicative.Priorities
+                       Text.Regex.Applicative.StateQueue
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         

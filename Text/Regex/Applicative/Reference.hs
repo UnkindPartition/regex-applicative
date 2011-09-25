@@ -45,11 +45,11 @@ getChar = P $ \s ->
         [] -> []
         c:cs -> [(c,cs)]
 
-re2monad :: RegexpNode s r a -> P s a
+re2monad :: Regexp s r a -> P s a
 re2monad r =
-    case reg r of
+    case r of
         Eps -> return $ error "eps"
-        Symbol p -> do
+        Symbol _ p -> do
             c <- getChar
             if p c then return c else empty
         Alt a1 a2 -> re2monad a1 <|> re2monad a2

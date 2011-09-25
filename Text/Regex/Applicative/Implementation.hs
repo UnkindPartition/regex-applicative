@@ -1,103 +1,105 @@
-{-# LANGUAGE GADTs, TupleSections, DeriveFunctor #-}
-module Text.Regex.Applicative.Implementation where
-import Control.Applicative
-import Data.List
-import Text.Regex.Applicative.Priorities
+{-# LANGUAGE GADTs, TypeFamilies, GeneralizedNewtypeDeriving,
+             ScopedTypeVariables, ViewPatterns, PatternGuards #-}
+{-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
+module Text.Regex.Applicative.Implementation (match, Regexp(..)) where
+import Prelude
+import Control.Applicative hiding (empty)
+import Control.Monad.State
+import Text.Regex.Applicative.StateQueue
+import Control.Monad.ST
 
-data Regexp s r a where
-    Eps :: Regexp s r a
-    Symbol :: (s -> Bool) -> Regexp s r s
-    Alt :: RegexpNode s r a -> RegexpNode s r a -> Regexp s r a
-    App :: RegexpNode s (a -> r) (a -> b) -> RegexpNode s r a -> Regexp s r b
-    Fmap :: (a -> b) -> RegexpNode s r a -> Regexp s r b
+newtype ThreadId = ThreadId Int
+    deriving (Show, Eq, Ord, Num)
+
+data Regexp s i a where
+    Eps :: Regexp s i a
+    Symbol :: i -> (s -> Bool) -> Regexp s i s
+    Alt :: Regexp s i a -> Regexp s i a -> Regexp s i a
+    App :: Regexp s i (a -> b) -> Regexp s i a -> Regexp s i b
+    Fmap :: (a -> b) -> Regexp s i a -> Regexp s i b
     Rep :: (b -> a -> b) -- folding function (like in foldl)
         -> b             -- the value for zero matches, and also the initial value
                          -- for the folding function
-        -> RegexpNode s (b, b -> r) a
-                         -- Elements of the 2-tuple are the value accumulated so far
-                         -- and the continuation
-        -> Regexp s r b
+        -> Regexp s i a
+        -> Regexp s i b
 
-data RegexpNode s r a = RegexpNode
-    { active :: !Bool
-    , skip   :: !(Priority a)
-    , final_ :: !(Priority r)
-    , reg    :: !(Regexp s r a)
-    }
+fresh :: (MonadState m, StateType m ~ ThreadId) => m ThreadId
+fresh = do
+    i <- get
+    put $! i+1
+    return i
 
-emptyChoice p1 p2 = withPriority 1 p1 <|> withPriority 0 p2
+renumber :: Regexp s i a -> (Regexp s ThreadId a, ThreadId)
+renumber e = flip runState 1 $ compile e
+  where
+    compile :: Regexp s i a -> State ThreadId (Regexp s ThreadId a)
+    compile e =
+        case e of
+            Eps -> return Eps
+            Symbol _ p -> Symbol <$> fresh <*> pure p
+            Alt a1 a2 -> Alt <$> compile a1 <*> compile a2
+            App a1 a2 -> App <$> compile a1 <*> compile a2
+            Fmap f a -> Fmap f <$> compile a
+            Rep f b a -> Rep f b <$> compile a
 
-final r = if active r then final_ r else empty
+data Thread s a
+    = Thread
+        { threadId_ :: ThreadId
+        , _threadCont :: s -> [Thread s a]
+        }
+    | Accept a
 
-epsNode :: RegexpNode s r a
-epsNode = RegexpNode
-    { active = False
-    , skip   = pure $ error "epsNode"
-    , final_ = empty
-    , reg    = Eps
-    }
+threadId :: Thread s a -> ThreadId
+threadId Accept {} = 0
+threadId Thread { threadId_ = i } = i
 
-symbolNode :: (s -> Bool) -> RegexpNode s r s
-symbolNode c = RegexpNode
-    { active = False
-    , skip   = empty
-    , final_ = empty
-    , reg    = Symbol c
-    }
+compile :: forall a s r . Regexp s ThreadId a -> (a -> [Thread s r]) -> [Thread s r]
+compile e =
+    case e of
+        Eps -> \k -> k $ error "empty"
+        Symbol i p -> \k -> [t k] where
+          t :: (a -> [Thread s r]) -> Thread s r
+          t k = Thread i $ \s ->
+            if p s then k s else []
+        App (compile -> a1) (compile -> a2) -> \k ->
+            a1 (\a1_value -> a2 (k . a1_value))
+        Alt (compile -> a1) (compile -> a2) ->
+            \k -> a1 k ++ a2 k
+        Fmap f (compile -> a) -> \k -> a (k . f)
+        Rep f b (compile -> a) -> \k ->
+            let threads b =
+                    a (\v -> let b' = f b v in threads b' ++ k b') ++ k b
+            in threads b
 
-altNode :: RegexpNode s r a -> RegexpNode s r a -> RegexpNode s r a
-altNode a1 a2 = RegexpNode
-    { active = active a1 || active a2
-    , skip   = skip a1 `emptyChoice` skip a2
-    , final_ = final a1 <|> final a2
-    , reg    = Alt a1 a2
-    }
+run :: StateQueue st (Thread s r)
+    -> StateQueue st (Thread s r)
+    -> [s] -> ST st (Maybe r)
+run queue _ [] = fold f Nothing queue
+    where f a@Just{} _ _ = return a
+          f Nothing  _ x | Accept r <- x = return $ Just r
+                         | otherwise = return Nothing
+run queue newQueue (s:ss) = do
+    let accum q _ t =
+            case t of
+                Accept {} -> return q
+                Thread _ c ->
+                    foldM (\q x -> tryInsert x q) q $ c s
+    newQueue <- fold accum newQueue queue
+    let veryNewQueue = clear queue
+    run newQueue veryNewQueue ss
 
-appNode :: RegexpNode s (a -> r) (a -> b) -> RegexpNode s r a -> RegexpNode s r b
-appNode a1 a2 = RegexpNode
-    { active = active a1 || active a2
-    , skip   = skip a1 <*> skip a2
-    , final_ = final a1 <*> skip a2 <|> final a2
-    , reg    = App a1 a2
-    }
+tryInsert :: Thread s r -> StateQueue st (Thread s r) -> ST st (StateQueue st (Thread s r))
+tryInsert t@(threadId -> ThreadId i) queue = do
+    alreadyPresent <- member i queue
+    if alreadyPresent
+        then return queue
+        else insert i t queue
 
-fmapNode :: (a -> b) -> RegexpNode s r a -> RegexpNode s r b
-fmapNode f a = RegexpNode
-    { active = active a
-    , skip = fmap f $ skip a
-    , final_ = final a
-    , reg = Fmap f a
-    }
-
-repNode :: (b -> a -> b) -> b -> RegexpNode s (b, b -> r) a -> RegexpNode s r b
-repNode f b a = RegexpNode
-    { active = active a
-    , skip = withPriority 0 $ pure b
-    , final_ = withPriority 0 $ (\(b, f) -> f b) <$> final a
-    , reg = Rep f b a
-    }
-
-shift :: Priority (a -> r) -> RegexpNode s r a -> s -> RegexpNode s r a
-shift k r _ | not (active r) && not (isOK k) = r
-shift k re s =
-    case reg re of
-        Eps -> re
-        Symbol predicate ->
-            let f = k <*> if predicate s then pure s else empty
-            in re { final_ = f, active = isOK f }
-        Alt a1 a2 -> altNode (shift (withPriority 1 k) a1 s) (shift (withPriority 0 k) a2 s)
-        App a1 a2 -> appNode
-            (shift kc a1 s)
-            (shift (kc <*> skip a1 <|> final a1) a2 s)
-            where kc = fmap (.) k
-        Fmap f a -> fmapNode f $ shift (fmap (. f) k) a s
-        Rep f b a -> repNode f b $ shift k' a s
-            where
-            k' = withPriority 1 $
-                    (\(b, k) -> \a -> (f b a, k)) <$>
-                        ((b,) <$> k <|> final a)
-
-match :: RegexpNode s r r -> [s] -> Priority r
-match r [] = skip r
-match r (s:ss) = final $
-    foldl' (\r s -> shift empty r s) (shift (pure id) r s) ss
+match :: Regexp s a r -> [s] -> Maybe r
+match r s = runST $ do
+    let (rr, ThreadId numStates) = renumber r
+    q1 <- empty numStates
+    q2 <- empty numStates
+    let threads = compile rr (\x -> [Accept x])
+    q1 <- foldM (\q t -> tryInsert t q) q1 threads
+    run q1 q2 s

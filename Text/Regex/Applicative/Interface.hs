@@ -4,7 +4,6 @@ import Control.Applicative hiding (empty)
 import qualified Control.Applicative
 import Data.Traversable
 import Text.Regex.Applicative.Implementation
-import Text.Regex.Applicative.Priorities
 
 -- | Type of regular expressions that recognize symbols of type @s@ and
 -- produce a result of type @a@.
@@ -30,23 +29,23 @@ import Text.Regex.Applicative.Priorities
 --
 -- * 'many' @ra@ matches concatenation of zero or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
-newtype RE s a = RE { unRE :: forall r . RegexpNode s r a }
+newtype RE s a = RE (forall i . Regexp s i a)
 
 instance Functor (RE s) where
-    fmap f (RE a) = RE $ fmapNode f a
+    fmap f (RE x) = RE $ Fmap f x
 
 instance Applicative (RE s) where
-    pure x = const x <$> RE epsNode
-    (RE a1) <*> (RE a2) = RE $ appNode a1 a2
+    pure x = const x <$> RE Eps
+    (RE a1) <*> (RE a2) = RE $ App a1 a2
 
 instance Alternative (RE s) where
-    (RE a1) <|> (RE a2) = RE $ altNode a1 a2
-    empty = error "noMatch" <$> psym (const False)
-    many a = reverse <$> reFoldl (flip (:)) [] a
+    (RE a1) <|> (RE a2) = RE $ Alt a1 a2
+    empty = RE Eps
+    many (RE a) = reverse <$> RE (Rep (flip (:)) [] a)
 
 -- | Matches and returns a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
-psym p = RE $ symbolNode p
+psym p = RE $ Symbol (error "Not numbered symbol") p
 
 -- | Matches and returns the given symbol
 sym :: Eq s => s -> RE s s
@@ -58,14 +57,14 @@ anySym = psym (const True)
 
 -- | Matches and returns the given sequence of symbols
 string :: Eq a => [a] -> RE a [a]
-string = sequenceA . map sym
+string = traverse sym
 
 -- | Greedily matches zero or more symbols, which are combined using the given
 -- folding function
 reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
-reFoldl f b (RE a) = RE $ repNode f b a
+reFoldl f b (RE a) = RE $ Rep f b a
 
 -- | Attempts to match a string of symbols against the regular expression
 (=~) :: [s] -> RE s a -> Maybe a
-s =~ (RE r) = priorityToMaybe $ match r s
+s =~ (RE a) = match a s
 infix 2 =~
