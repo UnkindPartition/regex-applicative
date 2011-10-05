@@ -4,7 +4,7 @@
 module Text.Regex.Applicative.Implementation (match, Regexp(..)) where
 import Prelude
 import Control.Applicative hiding (empty)
-import Control.Monad.State
+import Control.Monad.State hiding (foldM)
 import Text.Regex.Applicative.StateQueue
 import Control.Monad.ST
 
@@ -103,3 +103,8 @@ match r s = runST $ do
     let threads = compile rr (\x -> [Accept x])
     q1 <- foldM (\q t -> tryInsert t q) q1 threads
     run q1 q2 s
+
+-- This turns out to be much faster than the standard foldM,
+-- because of inlining.
+foldM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
+foldM f a l = foldr (\x k a -> f a x >>= k) return l $ a
