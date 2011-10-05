@@ -73,6 +73,8 @@ Library
   -- Modules not exported by this package.
   Other-modules:       Text.Regex.Applicative.Interface
                        Text.Regex.Applicative.Implementation
+                       Text.Regex.Applicative.Types
+                       Text.Regex.Applicative.Compile
                        Text.Regex.Applicative.StateQueue
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
