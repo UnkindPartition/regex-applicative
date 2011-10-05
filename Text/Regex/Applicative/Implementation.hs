@@ -1,27 +1,12 @@
-{-# LANGUAGE GADTs, TypeFamilies, GeneralizedNewtypeDeriving,
-             ScopedTypeVariables, ViewPatterns, PatternGuards #-}
-{-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
+{-# LANGUAGE GADTs, TypeFamilies, ViewPatterns, PatternGuards #-}
 module Text.Regex.Applicative.Implementation (match, Regexp(..)) where
 import Prelude
 import Control.Applicative hiding (empty)
 import Control.Monad.State hiding (foldM)
 import Text.Regex.Applicative.StateQueue
 import Control.Monad.ST
-
-newtype ThreadId = ThreadId Int
-    deriving (Show, Eq, Ord, Num)
-
-data Regexp s i a where
-    Eps :: Regexp s i a
-    Symbol :: i -> (s -> Bool) -> Regexp s i s
-    Alt :: Regexp s i a -> Regexp s i a -> Regexp s i a
-    App :: Regexp s i (a -> b) -> Regexp s i a -> Regexp s i b
-    Fmap :: (a -> b) -> Regexp s i a -> Regexp s i b
-    Rep :: (b -> a -> b) -- folding function (like in foldl)
-        -> b             -- the value for zero matches, and also the initial value
-                         -- for the folding function
-        -> Regexp s i a
-        -> Regexp s i b
+import Text.Regex.Applicative.Types
+import Text.Regex.Applicative.Compile
 
 fresh :: (MonadState m, StateType m ~ ThreadId) => m ThreadId
 fresh = do
@@ -42,34 +27,11 @@ renumber e = flip runState 1 $ compile e
             Fmap f a -> Fmap f <$> compile a
             Rep f b a -> Rep f b <$> compile a
 
-data Thread s a
-    = Thread
-        { threadId_ :: ThreadId
-        , _threadCont :: s -> [Thread s a]
-        }
-    | Accept a
 
 threadId :: Thread s a -> ThreadId
 threadId Accept {} = 0
 threadId Thread { threadId_ = i } = i
 
-compile :: forall a s r . Regexp s ThreadId a -> (a -> [Thread s r]) -> [Thread s r]
-compile e =
-    case e of
-        Eps -> \k -> k $ error "empty"
-        Symbol i p -> \k -> [t k] where
-          t :: (a -> [Thread s r]) -> Thread s r
-          t k = Thread i $ \s ->
-            if p s then k s else []
-        App (compile -> a1) (compile -> a2) -> \k ->
-            a1 (\a1_value -> a2 (k . a1_value))
-        Alt (compile -> a1) (compile -> a2) ->
-            \k -> a1 k ++ a2 k
-        Fmap f (compile -> a) -> \k -> a (k . f)
-        Rep f b (compile -> a) -> \k ->
-            let threads b =
-                    a (\v -> let b' = f b v in threads b' ++ k b') ++ k b
-            in threads b
 
 run :: StateQueue st (Thread s r)
     -> StateQueue st (Thread s r)
