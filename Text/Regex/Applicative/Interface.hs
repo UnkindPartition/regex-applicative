@@ -1,8 +1,9 @@
-{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative
 import Data.Traversable
+import Data.String
 import Text.Regex.Applicative.Implementation
 
 -- | Type of regular expressions that recognize symbols of type @s@ and
@@ -43,6 +44,9 @@ instance Alternative (RE s) where
     empty = RE Eps
     many (RE a) = reverse <$> RE (Rep (flip (:)) [] a)
 
+instance (char ~ Char, string ~ String) => IsString (RE char string) where
+    fromString = string
+
 -- | Matches and returns a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
 psym p = RE $ Symbol (error "Not numbered symbol") p
@@ -55,7 +59,20 @@ sym s = psym (s ==)
 anySym :: RE s s
 anySym = psym (const True)
 
--- | Matches and returns the given sequence of symbols
+-- | Matches and returns the given sequence of symbols.
+--
+-- Note that you there is an 'IsString' instance for regular expression, so
+-- if you enable the @OverloadedStrings@ language extension, you can write
+-- @string \"foo\"@ simply as @\"foo\"@.
+--
+-- Example:
+--
+-- >{-# LANGUAGE OverloadedStrings #-}
+-- >import Text.Regex.Applicative
+-- >
+-- >number = "one" *> pure 1  <|>  "two" *> pure 2
+-- >
+-- >main = print $ "two" =~ number
 string :: Eq a => [a] -> RE a [a]
 string = traverse sym
 
