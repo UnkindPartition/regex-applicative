@@ -27,6 +27,6 @@ compile e =
         Fmap f (compile -> a) -> \k -> a (k . f)
         Rep f b (compile -> a) -> \k ->
             let threads b =
-                    a (\v -> let b' = f b v in threads b' ++ k b') ++ k b
+                    a (\v -> let b' = f b v in threads b') ++ k b
             in threads b
 {-# NOINLINE compile #-}
