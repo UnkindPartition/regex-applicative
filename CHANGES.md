@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.1.4
+-----
+* Completely rewrite the engine. Now it's faster and runs in constant space.
+* Add 'string' function and 'IsString' instance.
+
 0.1.3
 -----
 * Fix a .cabal-file issue introduced in 0.1.2

@@ -9,7 +9,7 @@ Name:                regex-applicative
 -- standards guiding when and how versions should be incremented.
 
 -- DO NOT FORGET TO UPDATE THE GIT TAG BELOW!!!
-Version:             0.1.3
+Version:             0.1.4
 
 -- A short (one-line) description of the package.
 Synopsis:            Regex-based parsing with applicative interface
@@ -56,7 +56,7 @@ Source-repository head
 Source-repository this
   type:     git
   location: git://github.com/feuerbach/regex-applicative.git
-  tag:      v0.1.3
+  tag:      v0.1.4
 
 Library
   -- Packages needed in order to build this package.
