@@ -7,6 +7,8 @@
 -- Maintainer: Roman Cheplyaka <roma@ro-che.info>
 -- Stability : experimental
 --
+-- To get started, see some examples on the wiki:
+-- <https://github.com/feuerbach/regex-applicative/wiki/Examples>
 --------------------------------------------------------------------
 
 module Text.Regex.Applicative

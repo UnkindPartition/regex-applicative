@@ -22,7 +22,9 @@ Install this library using `cabal-install` tool:
 
 Documentation
 -------------
-The [API reference][haddock] is available from Hackage
+The [API reference][haddock] is available from Hackage.
+
+To get started, see some [examples][examples] on the wiki.
 
 Other resources
 ---------------
@@ -34,6 +36,7 @@ Other resources
       how this works
 
 
+[examples]: https://github.com/feuerbach/regex-applicative/wiki/Examples
 [haddock]: http://hackage.haskell.org/packages/archive/regex-applicative/latest/doc/html/Text-Regex-Applicative.html
 [hackage]: http://hackage.haskell.org/package/regex-applicative
 [issues]: https://github.com/feuerbach/regex-applicative/issues
