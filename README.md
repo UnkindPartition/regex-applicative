@@ -32,8 +32,6 @@ Other resources
 * [This package on Hackage][hackage]
 * [Issue tracker][issues]
 * [Repository][github]
-* ["A Play on Regular Expressions"][play] paper explains, to some extent,
-      how this works
 
 
 [examples]: https://github.com/feuerbach/regex-applicative/wiki/Examples
@@ -41,4 +39,3 @@ Other resources
 [hackage]: http://hackage.haskell.org/package/regex-applicative
 [issues]: https://github.com/feuerbach/regex-applicative/issues
 [github]: https://github.com/feuerbach/regex-applicative
-[play]: http://sebfisch.github.com/haskell-regexp/regexp-play.pdf
