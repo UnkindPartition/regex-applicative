@@ -3,24 +3,55 @@
 module Text.Regex.Applicative.Types where
 
 newtype ThreadId = ThreadId Int
-    deriving (Show, Eq, Ord, Num)
+    deriving (Show, Eq, Ord, Num, Real, Enum, Integral)
 
-data Thread s a
+-- | A thread either is a result or corresponds to a symbol in the regular
+-- expression, which is expected by that thread.
+data Thread s r
     = Thread
         { threadId_ :: ThreadId
-        , _threadCont :: s -> [Thread s a]
+        , _threadCont :: s -> [Thread s r]
         }
-    | Accept a
+    | Accept r
 
-data Regexp s i a where
-    Eps :: Regexp s i a
-    Symbol :: i -> (s -> Bool) -> Regexp s i s
-    Alt :: Regexp s i a -> Regexp s i a -> Regexp s i a
-    App :: Regexp s i (a -> b) -> Regexp s i a -> Regexp s i b
-    Fmap :: (a -> b) -> Regexp s i a -> Regexp s i b
+-- | Returns thread identifier. This will be 'Just' for ordinary threads and
+-- 'Nothing' for results.
+threadId :: Thread s r -> Maybe ThreadId
+threadId Thread { threadId_ = i } = Just i
+threadId _ = Nothing
+
+-- | Type of regular expressions that recognize symbols of type @s@ and
+-- produce a result of type @a@.
+--
+-- Regular expressions can be built using 'Functor', 'Applicative' and
+-- 'Alternative' instances in the following natural way:
+--
+-- * @f@ '<$>' @ra@ matches iff @ra@ matches, and its return value is the result
+-- of applying @f@ to the return value of @ra@.
+--
+-- * 'pure' @x@ matches the empty string (i.e. it does not consume any symbols),
+-- and its return value is @x@
+--
+-- * @rf@ '<*>' @ra@ matches a string iff it is a concatenation of two
+-- strings: one matched by @rf@ and the other matched by @ra@. The return value
+-- is @f a@, where @f@ and @a@ are the return values of @rf@ and @ra@
+-- respectively.
+--
+-- * @ra@ '<|>' @rb@ matches a string which is accepted by either @ra@ or @rb@.
+-- It is left-biased, so if both can match, the result of @ra@ is used.
+--
+-- * 'Control.Applicative.empty' is a regular expression which does not match any string.
+--
+-- * 'many' @ra@ matches concatenation of zero or more strings matched by @ra@
+-- and returns the list of @ra@'s return values on those strings.
+data RE s a where
+    Eps :: RE s a
+    Symbol :: ThreadId -> (s -> Bool) -> RE s s
+    Alt :: RE s a -> RE s a -> RE s a
+    App :: RE s (a -> b) -> RE s a -> RE s b
+    Fmap :: (a -> b) -> RE s a -> RE s b
     Rep :: (b -> a -> b) -- folding function (like in foldl)
         -> b             -- the value for zero matches, and also the initial value
                          -- for the folding function
-        -> Regexp s i a
-        -> Regexp s i b
-
+        -> RE s a
+        -> RE s b

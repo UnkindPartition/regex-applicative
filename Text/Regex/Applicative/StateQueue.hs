@@ -3,7 +3,9 @@ module Text.Regex.Applicative.StateQueue
     ( StateQueue
     , empty
     , insert
+    , insertUnique
     , fold
+    , getElements
     ) where
 
 import Prelude hiding (read, lookup, replicate)
@@ -14,6 +16,9 @@ data StateQueue a = StateQueue
     , ids :: IntSet.IntSet
     }
 
+getElements :: StateQueue a -> [a]
+getElements = reverse . elements
+
 {-# INLINE empty #-}
 empty :: StateQueue a
 empty = StateQueue
@@ -22,17 +27,24 @@ empty = StateQueue
     }
 
 {-# INLINE insert #-}
-insert
+insertUnique
     :: Int
     -> a
     -> StateQueue a
     -> StateQueue a
-insert i v sq@StateQueue {..} =
+insertUnique i v sq@StateQueue {..} =
     if i `IntSet.member` ids
         then sq
         else sq { elements = v : elements
                 , ids = IntSet.insert i ids
                 }
+
+insert
+    :: a
+    -> StateQueue a
+    -> StateQueue a
+insert v sq =
+    sq { elements = v : elements sq }
 
 {-# INLINE fold #-}
 fold :: (a -> x -> a) -> a -> StateQueue x -> a

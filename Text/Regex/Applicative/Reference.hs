@@ -13,7 +13,7 @@
 {-# LANGUAGE GADTs #-}
 module Text.Regex.Applicative.Reference (reference) where
 import Prelude hiding (getChar)
-import Text.Regex.Applicative.Implementation
+import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Interface
 import Control.Applicative
 import Control.Monad
@@ -45,7 +45,7 @@ getChar = P $ \s ->
         [] -> []
         c:cs -> [(c,cs)]
 
-re2monad :: Regexp s r a -> P s a
+re2monad :: RE s a -> P s a
 re2monad r =
     case r of
         Eps -> return $ error "eps"
@@ -70,4 +70,4 @@ runP m s = case filter (null . snd) $ unP m s of
 -- However, this is not very efficient implementation and is supposed to be
 -- used for testing only.
 reference :: RE s a -> [s] -> Maybe a
-reference (RE r) s = runP (re2monad r) s
+reference r s = runP (re2monad r) s

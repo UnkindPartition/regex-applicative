@@ -22,5 +22,6 @@ module Text.Regex.Applicative
     , module Control.Applicative
     )
     where
+import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Interface
 import Control.Applicative

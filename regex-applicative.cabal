@@ -68,10 +68,10 @@ Library
   -- Modules exported by the library.
   Exposed-modules:     Text.Regex.Applicative
                        Text.Regex.Applicative.Reference
+                       Text.Regex.Applicative.Object
   
   -- Modules not exported by this package.
   Other-modules:       Text.Regex.Applicative.Interface
-                       Text.Regex.Applicative.Implementation
                        Text.Regex.Applicative.Types
                        Text.Regex.Applicative.Compile
                        Text.Regex.Applicative.StateQueue
