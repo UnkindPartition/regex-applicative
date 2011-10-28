@@ -33,38 +33,31 @@ threadId Accept {} = 0
 threadId Thread { threadId_ = i } = i
 
 
-run :: StateQueue st (Thread s r)
-    -> StateQueue st (Thread s r)
-    -> [s] -> ST st (Maybe r)
-run queue _ [] = fold f Nothing queue
-    where f a@Just{} _ _ = return a
-          f Nothing  _ x | Accept r <- x = return $ Just r
-                         | otherwise = return Nothing
-run queue newQueue (s:ss) = do
-    let accum q _ t =
+run :: StateQueue (Thread s r)
+    -> [s] -> Maybe r
+run queue [] = fold f Nothing queue
+    where f a@Just{} _ = a
+          f Nothing  x | Accept r <- x = Just r
+                       | otherwise = Nothing
+run queue (s:ss) =
+    let accum q t =
             case t of
-                Accept {} -> return q
+                Accept {} -> q
                 Thread _ c ->
-                    foldM (\q x -> tryInsert x q) q $ c s
-    newQueue <- fold accum newQueue queue
-    let veryNewQueue = clear queue
-    run newQueue veryNewQueue ss
-
-tryInsert :: Thread s r -> StateQueue st (Thread s r) -> ST st (StateQueue st (Thread s r))
-tryInsert t@(threadId -> ThreadId i) queue = do
-    alreadyPresent <- member i queue
-    if alreadyPresent
-        then return queue
-        else insert i t queue
+                    foldl (\q x -> insertThread x q) q $ c s
+        newQueue = fold accum empty queue
+    in run newQueue ss
 
 match :: Regexp s a r -> [s] -> Maybe r
-match r s = runST $ do
+match r s =
     let (rr, ThreadId numStates) = renumber r
-    q1 <- empty numStates
-    q2 <- empty numStates
-    let threads = compile rr (\x -> [Accept x])
-    q1 <- foldM (\q t -> tryInsert t q) q1 threads
-    run q1 q2 s
+        threads = compile rr (\x -> [Accept x])
+        q = foldl (\q t -> insertThread t q) empty threads
+    in run q s
+
+insertThread t q =
+    case threadId t of
+        ThreadId i -> insert i t q
 
 -- This turns out to be much faster than the standard foldM,
 -- because of inlining.

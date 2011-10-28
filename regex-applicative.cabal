@@ -62,8 +62,7 @@ Library
   -- Packages needed in order to build this package.
   Build-depends:       base >= 4.2 && < 4.4,
                        containers >= 0.3 && < 0.5,
-                       monads-tf == 0.1.*,
-                       vector == 0.7.*
+                       monads-tf == 0.1.*
 
 
   -- Modules exported by the library.
