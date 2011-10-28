@@ -67,7 +67,6 @@ Library
 
   -- Modules exported by the library.
   Exposed-modules:     Text.Regex.Applicative
-                       Text.Regex.Applicative.Reference
                        Text.Regex.Applicative.Object
   
   -- Modules not exported by this package.
