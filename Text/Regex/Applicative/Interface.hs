@@ -24,21 +24,21 @@ instance Alternative (RE s) where
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string
 
--- | Matches and returns a single symbol which satisfies the predicate
+-- | Match and return a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
 psym p = Symbol (error "Not numbered symbol") p
 
--- | Matches and returns the given symbol
+-- | Match and return the given symbol
 sym :: Eq s => s -> RE s s
 sym s = psym (s ==)
 
--- | Matches and returns any single symbol
+-- | Match and return any single symbol
 anySym :: RE s s
 anySym = psym (const True)
 
--- | Matches and returns the given sequence of symbols.
+-- | Match and return the given sequence of symbols.
 --
--- Note that you there is an 'IsString' instance for regular expression, so
+-- Note that there is an 'IsString' instance for regular expression, so
 -- if you enable the @OverloadedStrings@ language extension, you can write
 -- @string \"foo\"@ simply as @\"foo\"@.
 --
@@ -53,7 +53,7 @@ anySym = psym (const True)
 string :: Eq a => [a] -> RE a [a]
 string = traverse sym
 
--- | Greedily matches zero or more symbols, which are combined using the given
+-- | Greedily match zero or more symbols, which are combined using the given
 -- folding function
 reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
 reFoldl f b a = Rep f b a
@@ -63,7 +63,7 @@ reFoldl f b a = Rep f b a
 s =~ a = match a s
 infix 2 =~
 
--- | Attempts to match a string of symbols against the regular expression.
+-- | Attempt to match a string of symbols against the regular expression.
 -- Note that the whole string (not just some part of it) should be matched.
 --
 -- Examples:
