@@ -51,15 +51,18 @@ threads (ReObject sq) = SQ.getElements sq
 fromThreads :: [Thread s r] -> ReObject s r
 fromThreads ts = foldl (flip addThread) emptyObject ts
 
+-- | Check whether a thread is a result thread
 isResult :: Thread s r -> Bool
 isResult Accept {} = True
 isResult _ = False
 
+-- | Return the result of a result thread, or 'Nothing' if it's not a result
+-- thread
 getResult :: Thread s r -> Maybe r
 getResult (Accept r) = Just r
 getResult _ = Nothing
 
--- | Checks if the object has no threads. In that case it never will
+-- | Check if the object has no threads. In that case it never will
 -- produce any new threads as a result of 'step'.
 failed :: ReObject s r -> Bool
 failed obj = null $ threads obj
@@ -68,11 +71,12 @@ failed obj = null $ threads obj
 emptyObject :: ReObject s r
 emptyObject = ReObject $ SQ.empty
 
+-- | Extract the result values from all the result threads of an object
 results :: ReObject s r -> [r]
 results obj =
     mapMaybe getResult $ threads obj
 
--- | Feeds a symbol into a regex object
+-- | Feed a symbol into a regex object
 step :: s -> ReObject s r -> ReObject s r
 step s (ReObject sq) =
     let accum q t =
@@ -102,7 +106,7 @@ addThread t (ReObject q) =
         Accept {} -> ReObject $ SQ.insert t q
         Thread { threadId_ = ThreadId i } -> ReObject $ SQ.insertUnique i t q
 
--- | Compiles a regular expression into a regular expression object
+-- | Compile a regular expression into a regular expression object
 compile :: RE s r -> ReObject s r
 compile =
     fromThreads .
