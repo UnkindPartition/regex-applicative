@@ -1,4 +1,5 @@
 {-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative
