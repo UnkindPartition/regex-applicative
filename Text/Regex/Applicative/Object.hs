@@ -18,6 +18,7 @@ module Text.Regex.Applicative.Object
     , threads
     , failed
     , isResult
+    , getResult
     , results
     , ThreadId
     , threadId
