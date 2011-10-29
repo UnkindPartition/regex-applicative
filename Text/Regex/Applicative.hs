@@ -18,7 +18,11 @@ module Text.Regex.Applicative
     , anySym
     , string
     , reFoldl
+    , match
     , (=~)
+    , findFirstPrefix
+    , findLongestPrefix
+    , findShortestPrefix
     , module Control.Applicative
     )
     where
