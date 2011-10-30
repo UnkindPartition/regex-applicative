@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.1.5
+-----
+* Expose Object interface
+* Allow matching prefixes rather than the whole string
+* Add non-greedy repetitions
+
 0.1.4
 -----
 * Completely rewrite the engine. Now it's faster and runs in constant space.
