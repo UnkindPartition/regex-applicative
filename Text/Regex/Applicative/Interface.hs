@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies, TupleSections #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
@@ -69,9 +69,9 @@ reFoldl g f b a = Rep g f b a
 -- Examples:
 --
 -- >Text.Regex.Applicative> findFirstPrefix (few anySym  <* "b") "ababab"
--- >Just "a"
+-- >Just ("a","abab")
 -- >Text.Regex.Applicative> findFirstPrefix (many anySym  <* "b") "ababab"
--- >Just "ababa"
+-- >Just ("ababa","")
 few :: RE s a -> RE s [a]
 few a = reverse <$> Rep NonGreedy (flip (:)) [] a
 
@@ -104,15 +104,17 @@ match re str =
 -- This is the match which a backtracking engine (such as Perl's one) would find
 -- first.
 --
+-- If match is found, the rest of the input is also returned.
+--
 -- Examples:
 --
 -- >Text.Regex.Applicative> findFirstPrefix ("a" <|> "ab") "abc"
--- >Just "a"
+-- >Just ("a","bc")
 -- >Text.Regex.Applicative> findFirstPrefix ("ab" <|> "a") "abc"
--- >Just "ab"
+-- >Just ("ab","c")
 -- >Text.Regex.Applicative> findFirstPrefix "bc" "abc"
 -- >Nothing
-findFirstPrefix :: RE s a -> [s] -> Maybe a
+findFirstPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findFirstPrefix re str = go (compile re) str Nothing
     where
     walk obj [] = (obj, Nothing)
@@ -124,7 +126,7 @@ findFirstPrefix re str = go (compile re) str Nothing
     go obj str resOld =
         case walk emptyObject $ threads obj of
             (obj', resThis) ->
-                let res = resThis <|> resOld
+                let res = ((,str) <$> resThis) <|> resOld
                 in
                     case str of
                         [] -> res
@@ -136,20 +138,22 @@ findFirstPrefix re str = go (compile re) str Nothing
 -- Submatches are still determined using left bias and greediness, so this is
 -- different from POSIX semantics.
 --
+-- If match is found, the rest of the input is also returned.
+--
 -- Examples:
 --
 -- >Text.Regex.Applicative Data.Char> let keyword = "if"
 -- >Text.Regex.Applicative Data.Char> let identifier = many $ psym isAlpha
 -- >Text.Regex.Applicative Data.Char> let lexeme = (Left <$> keyword) <|> (Right <$> identifier)
 -- >Text.Regex.Applicative Data.Char> findLongestPrefix lexeme "if foo"
--- >Just (Left "if")
+-- >Just (Left "if"," foo")
 -- >Text.Regex.Applicative Data.Char> findLongestPrefix lexeme "iffoo"
--- >Just (Right "iffoo")
-findLongestPrefix :: RE s a -> [s] -> Maybe a
+-- >Just (Right "iffoo","")
+findLongestPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findLongestPrefix re str = go (compile re) str Nothing
     where
     go obj str resOld =
-        let res = (listToMaybe $ results obj) <|> resOld
+        let res = (fmap (,str) $ listToMaybe $ results obj) <|> resOld
         in
             case str of
                 [] -> res
@@ -157,12 +161,12 @@ findLongestPrefix re str = go (compile re) str Nothing
                 (s:ss) -> go (step s obj) ss res
 
 -- | Find the shortest prefix (analogous to 'findLongestPrefix')
-findShortestPrefix :: RE s a -> [s] -> Maybe a
+findShortestPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findShortestPrefix re str = go (compile re) str
     where
     go obj str =
         case results obj of
-            r : _ -> Just r
+            r : _ -> Just (r, str)
             [] ->
                 case str of
                     [] -> Nothing
