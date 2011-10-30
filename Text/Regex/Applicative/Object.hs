@@ -125,7 +125,7 @@ renumber e = flip evalState 1 $ go e
             Alt a1 a2 -> Alt <$> go a1 <*> go a2
             App a1 a2 -> App <$> go a1 <*> go a2
             Fmap f a -> Fmap f <$> go a
-            Rep f b a -> Rep f b <$> go a
+            Rep g f b a -> Rep g f b <$> go a
 
 fresh :: (MonadState m, StateType m ~ ThreadId) => m ThreadId
 fresh = do

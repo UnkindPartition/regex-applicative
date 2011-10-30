@@ -38,7 +38,13 @@ compile2 e =
         -- This is actually the point where we use the difference between
         -- continuations. For the inner RE the empty continuation is a
         -- "failing" one in order to avoid non-termination.
-        Rep f b (compile2 -> a) ->
-            let threads b ke kn =
-                    a (\_ -> []) (\v -> let b' = f b v in threads b' kn kn) ++ ke b
+        Rep g f b (compile2 -> a) ->
+            let combine continue stop =
+                    case g of
+                        Greedy -> continue ++ stop
+                        NonGreedy -> stop ++ continue
+                threads b ke kn =
+                    combine
+                        (a (\_ -> []) (\v -> let b' = f b v in threads b' kn kn))
+                        (ke b)
             in threads b

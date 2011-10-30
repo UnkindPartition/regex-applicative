@@ -19,7 +19,7 @@ instance Applicative (RE s) where
 instance Alternative (RE s) where
     a1 <|> a2 = Alt a1 a2
     empty = Eps
-    many a = reverse <$> Rep (flip (:)) [] a
+    many a = reverse <$> Rep Greedy (flip (:)) [] a
 
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string
@@ -53,10 +53,14 @@ anySym = psym (const True)
 string :: Eq a => [a] -> RE a [a]
 string = traverse sym
 
--- | Greedily match zero or more symbols, which are combined using the given
--- folding function
-reFoldl :: (b -> a -> b) -> b -> RE s a -> RE s b
-reFoldl f b a = Rep f b a
+-- | Match zero or more instances of the given expression, which are combined using
+-- the given folding function.
+--
+-- 'Greediness' argument controls whether this regular expression should match
+-- as many as possible ('Greedy') or as few as possible ('NonGreedy') instances
+-- of the underlying expression.
+reFoldl :: Greediness -> (b -> a -> b) -> b -> RE s a -> RE s b
+reFoldl g f b a = Rep g f b a
 
 -- | @s =~ a = match a s@
 (=~) :: [s] -> RE s a -> Maybe a

@@ -20,6 +20,9 @@ threadId :: Thread s r -> Maybe ThreadId
 threadId Thread { threadId_ = i } = Just i
 threadId _ = Nothing
 
+data Greediness = Greedy | NonGreedy
+    deriving (Show, Read, Eq, Ord, Enum)
+
 -- | Type of regular expressions that recognize symbols of type @s@ and
 -- produce a result of type @a@.
 --
@@ -50,7 +53,8 @@ data RE s a where
     Alt :: RE s a -> RE s a -> RE s a
     App :: RE s (a -> b) -> RE s a -> RE s b
     Fmap :: (a -> b) -> RE s a -> RE s b
-    Rep :: (b -> a -> b) -- folding function (like in foldl)
+    Rep :: Greediness    -- repetition may be greedy or not
+        -> (b -> a -> b) -- folding function (like in foldl)
         -> b             -- the value for zero matches, and also the initial value
                          -- for the folding function
         -> RE s a

@@ -18,6 +18,7 @@ module Text.Regex.Applicative
     , anySym
     , string
     , reFoldl
+    , Greediness(..)
     , match
     , (=~)
     , findFirstPrefix
