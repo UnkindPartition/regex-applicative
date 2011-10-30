@@ -62,6 +62,19 @@ string = traverse sym
 reFoldl :: Greediness -> (b -> a -> b) -> b -> RE s a -> RE s b
 reFoldl g f b a = Rep g f b a
 
+-- | Match zero or more instances of the given expression, but as
+-- few of them as possible (i.e. /non-greedily/). A greedy equivalent of 'few'
+-- is 'many'.
+--
+-- Examples:
+--
+-- >Text.Regex.Applicative> findFirstPrefix (few anySym  <* "b") "ababab"
+-- >Just "a"
+-- >Text.Regex.Applicative> findFirstPrefix (many anySym  <* "b") "ababab"
+-- >Just "ababa"
+few :: RE s a -> RE s [a]
+few a = reverse <$> Rep NonGreedy (flip (:)) [] a
+
 -- | @s =~ a = match a s@
 (=~) :: [s] -> RE s a -> Maybe a
 s =~ a = match a s
