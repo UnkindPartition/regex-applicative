@@ -1,8 +1,10 @@
-{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies, TupleSections #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies, TupleSections,
+    ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative
+import Control.Arrow
 import Data.Traversable
 import Data.String
 import Data.Maybe
@@ -172,3 +174,97 @@ findShortestPrefix re str = go (compile re) str
                     [] -> Nothing
                     _ | failed obj -> Nothing
                     s:ss -> go (step s obj) ss
+
+-- | Find the leftmost substring that is matched by the regular expression.
+-- Otherwise behaves like 'findFirstPrefix'. Returns the result together with
+-- the prefix and suffix of the string surrounding the match.
+findFirstInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
+findFirstInfix re str =
+    fmap (\((first, res), last) -> (first, res, last)) $
+    findFirstPrefix ((,) <$> few anySym <*> re) str
+
+-- Auxiliary function for find{Longest,Shortest}Infix
+prefixCounter :: RE s (Int, [s])
+prefixCounter = second reverse <$> reFoldl NonGreedy f (0, []) anySym
+    where
+    f (i, prefix) s = ((,) $! (i+1)) $ s:prefix
+
+data InfixMatchingState s a = GotResult
+    { prefixLen  :: !Int
+    , prefixStr  :: [s]
+    , result     :: a
+    , postfixStr :: [s]
+    }
+    | NoResult
+
+-- a `preferOver` b chooses one of a and b, giving preference to a
+preferOver
+    :: InfixMatchingState s a
+    -> InfixMatchingState s a
+    -> InfixMatchingState s a
+preferOver NoResult b = b
+preferOver b NoResult = b
+preferOver a b =
+    case prefixLen a `compare` prefixLen b of
+        GT -> b -- prefer b when it has smaller prefix
+        _  -> a -- otherwise, prefer a
+
+mkInfixMatchingState
+    :: [s] -- rest of input
+    -> Thread s ((Int, [s]), a)
+    -> InfixMatchingState s a
+mkInfixMatchingState rest thread =
+    case getResult thread of
+        Just ((pLen, pStr), res) ->
+            GotResult
+                { prefixLen = pLen
+                , prefixStr = pStr
+                , result    = res
+                , postfixStr = rest
+                }
+        Nothing -> NoResult
+
+gotResult :: InfixMatchingState s a -> Bool
+gotResult GotResult {} = True
+gotResult _ = False
+
+-- Algorithm for finding leftmost longest infix match:
+--
+-- 1. Add a thread /.*?/ to the begginning of the regexp
+-- 2. As soon as we get first accept, we delete that thread
+-- 3. When we get more than one accept, we choose one by the following criteria:
+-- 3.1. Compare by the length of prefix (since we are looking for the leftmost
+-- match)
+-- 3.2. If they are produced on the same step, choose the first one (left-biased
+-- choice)
+-- 3.3. If they are produced on the different steps, choose the later one (since
+-- they have the same prefixes, later means longer)
+findLongestInfix :: forall s a . RE s a -> [s] -> Maybe ([s], a, [s])
+findLongestInfix re str =
+    case go (compile $ (,) <$> prefixCounter <*> re) str NoResult of
+        NoResult -> Nothing
+        r@GotResult{} ->
+            Just (prefixStr r, result r, postfixStr r)
+    where
+    go :: ReObject s ((Int, [s]), a)
+       -> [s]
+       -> InfixMatchingState s a
+       -> InfixMatchingState s a
+    go obj str resOld =
+        let resThis =
+                foldl
+                    (\acc t -> acc `preferOver` mkInfixMatchingState str t)
+                    NoResult $
+                    threads obj
+            res = resThis `preferOver` resOld
+            obj' =
+                -- If we just found the first result, kill the "prefixCounter" thread.
+                -- We rely on the fact that it is the last thread of the object.
+                if gotResult resThis && not (gotResult resOld)
+                    then fromThreads $ init $ threads obj
+                    else obj
+        in
+            case str of
+                [] -> res
+                _ | failed obj -> res
+                (s:ss) -> go (step s obj') ss res
