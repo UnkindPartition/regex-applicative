@@ -1,6 +1,8 @@
 {-# LANGUAGE GADTs, GeneralizedNewtypeDeriving #-}
-{-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
+{-# OPTIONS_GHC -fno-do-lambda-eta-expansion -fno-warn-unused-imports #-}
 module Text.Regex.Applicative.Types where
+
+import Control.Applicative
 
 newtype ThreadId = ThreadId Int
     deriving (Show, Eq, Ord, Num, Real, Enum, Integral)
@@ -43,7 +45,7 @@ data Greediness = Greedy | NonGreedy
 -- * @ra@ '<|>' @rb@ matches a string which is accepted by either @ra@ or @rb@.
 -- It is left-biased, so if both can match, the result of @ra@ is used.
 --
--- * 'Control.Applicative.empty' is a regular expression which does not match any string.
+-- * 'empty' is a regular expression which does not match any string.
 --
 -- * 'many' @ra@ matches concatenation of zero or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
