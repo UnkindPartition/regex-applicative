@@ -27,6 +27,7 @@ module Text.Regex.Applicative
     , findShortestPrefix
     , findFirstInfix
     , findLongestInfix
+    , findShortestInfix
     , module Control.Applicative
     )
     where

@@ -239,8 +239,15 @@ gotResult _ = False
 -- choice)
 -- 3.3. If they are produced on the different steps, choose the later one (since
 -- they have the same prefixes, later means longer)
-findLongestInfix :: forall s a . RE s a -> [s] -> Maybe ([s], a, [s])
-findLongestInfix re str =
+findExtremalInfix
+    :: forall s a .
+       -- function to combine a later result (first arg) to an earlier one (second
+       -- arg)
+       (InfixMatchingState s a -> InfixMatchingState s a -> InfixMatchingState s a)
+    -> RE s a
+    -> [s]
+    -> Maybe ([s], a, [s])
+findExtremalInfix newOrOld re str =
     case go (compile $ (,) <$> prefixCounter <*> re) str NoResult of
         NoResult -> Nothing
         r@GotResult{} ->
@@ -256,7 +263,7 @@ findLongestInfix re str =
                     (\acc t -> acc `preferOver` mkInfixMatchingState str t)
                     NoResult $
                     threads obj
-            res = resThis `preferOver` resOld
+            res = resThis `newOrOld` resOld
             obj' =
                 -- If we just found the first result, kill the "prefixCounter" thread.
                 -- We rely on the fact that it is the last thread of the object.
@@ -268,3 +275,10 @@ findLongestInfix re str =
                 [] -> res
                 _ | failed obj -> res
                 (s:ss) -> go (step s obj') ss res
+
+
+findLongestInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
+findLongestInfix = findExtremalInfix preferOver
+
+findShortestInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
+findShortestInfix = findExtremalInfix $ flip preferOver
