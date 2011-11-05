@@ -14,7 +14,6 @@
 module Text.Regex.Applicative.Reference (reference) where
 import Prelude hiding (getChar)
 import Text.Regex.Applicative.Types
-import Text.Regex.Applicative.Interface
 import Control.Applicative
 import Control.Monad
 
