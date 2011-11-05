@@ -184,7 +184,7 @@ findFirstInfix re str =
     fmap (\((first, res), last) -> (first, res, last)) $
     findFirstPrefix ((,) <$> few anySym <*> re) str
 
--- Auxiliary function for find{Longest,Shortest}Infix
+-- Auxiliary function for findExtremeInfix
 prefixCounter :: RE s (Int, [s])
 prefixCounter = second reverse <$> reFoldl NonGreedy f (0, []) anySym
     where
@@ -278,8 +278,14 @@ findExtremalInfix newOrOld re str =
                 (s:ss) -> go (step s obj') ss res
 
 
+-- | Find the leftmost substring that is matched by the regular expression.
+-- Otherwise behaves like 'findLongestPrefix'. Returns the result together with
+-- the prefix and suffix of the string surrounding the match.
 findLongestInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
 findLongestInfix = findExtremalInfix preferOver
 
+-- | Find the leftmost substring that is matched by the regular expression.
+-- Otherwise behaves like 'findShortestPrefix'. Returns the result together with
+-- the prefix and suffix of the string surrounding the match.
 findShortestInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
 findShortestInfix = findExtremalInfix $ flip preferOver
