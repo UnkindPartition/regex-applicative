@@ -22,6 +22,7 @@ instance Alternative (RE s) where
     a1 <|> a2 = Alt a1 a2
     empty = Eps
     many a = reverse <$> Rep Greedy (flip (:)) [] a
+    some a = (:) <$> a <*> many a
 
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string

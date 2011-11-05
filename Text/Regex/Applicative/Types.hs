@@ -47,6 +47,9 @@ data Greediness = Greedy | NonGreedy
 --
 -- * 'many' @ra@ matches concatenation of zero or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
+--
+-- * 'some' @ra@ matches concatenation of one or more strings matched by @ra@
+-- and returns the list of @ra@'s return values on those strings.
 data RE s a where
     Eps :: RE s a
     Symbol :: ThreadId -> (s -> Bool) -> RE s s
