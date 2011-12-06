@@ -3,9 +3,13 @@ import Text.Regex.Applicative
 import Text.Regex.Applicative.Reference
 import Control.Applicative
 import Control.Monad
-import Test.SmallCheck
 import Data.Traversable
 import Text.Printf
+
+import Test.SmallCheck
+import Test.SmallCheck.Series
+import Test.Framework
+import Test.Framework.Providers.SmallCheck
 
 -- Small alphabets as SmallCheck's series
 newtype A = A { a :: Char } deriving Show
@@ -63,22 +67,16 @@ re8 = (,) <$> many (sym 'a' <|> sym 'b') <*> many (sym 'b' <|> sym 'c')
 prop re f (map f -> s) = reference re s == (s =~ re)
 
 tests =
-   [ depthCheck 10 $ prop re1 a
-   , depthCheck 10 $ prop re2 ab
-   , depthCheck 10 $ prop re3 ab
-   , depthCheck 10 $ prop re4 ab
-   , depthCheck 10 $ prop re5 a
-   , depthCheck 10 $ prop re6 a
-   , depthCheck 7  $ prop re7 abc
-   , depthCheck 7  $ prop re8 abc
-   ]
+    [ testGroup "Engine tests"
+       [ testProperty "re1" 10 $ prop re1 a
+       , testProperty "re2" 10 $ prop re2 ab
+       , testProperty "re3" 10 $ prop re3 ab
+       , testProperty "re4" 10 $ prop re4 ab
+       , testProperty "re5" 10 $ prop re5 a
+       , testProperty "re6" 10 $ prop re6 a
+       , testProperty "re7" 7  $ prop re7 abc
+       , testProperty "re8" 7  $ prop re8 abc
+       ]
+    ]
 
-main = do
-    foldM runTest (1 :: Int) tests
-    return ()
-    where
-    runTest n test = do
-        printf "Running test case %d...\n" n
-        test
-        printf "\n"
-        return $ n+1
+main = defaultMain tests
