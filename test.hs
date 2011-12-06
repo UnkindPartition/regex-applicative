@@ -68,15 +68,17 @@ prop re f (map f -> s) = reference re s == (s =~ re)
 
 tests =
     [ testGroup "Engine tests"
-       [ testProperty "re1" 10 $ prop re1 a
-       , testProperty "re2" 10 $ prop re2 ab
-       , testProperty "re3" 10 $ prop re3 ab
-       , testProperty "re4" 10 $ prop re4 ab
-       , testProperty "re5" 10 $ prop re5 a
-       , testProperty "re6" 10 $ prop re6 a
-       , testProperty "re7" 7  $ prop re7 abc
-       , testProperty "re8" 7  $ prop re8 abc
+       [ t "re1" 10 $ prop re1 a
+       , t "re2" 10 $ prop re2 ab
+       , t "re3" 10 $ prop re3 ab
+       , t "re4" 10 $ prop re4 ab
+       , t "re5" 10 $ prop re5 a
+       , t "re6" 10 $ prop re6 a
+       , t "re7"  7 $ prop re7 abc
+       , t "re8"  7 $ prop re8 abc
        ]
     ]
+    where
+    t name n = withDepth n . testProperty name
 
 main = defaultMain tests
