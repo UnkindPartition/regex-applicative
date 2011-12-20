@@ -48,4 +48,36 @@ compile2 e =
                         (a (\_ -> []) (\v -> let b' = f b v in threads b' kn kn))
                         (ke b)
             in threads b
-        Void (compile2 -> a) -> \ke kn -> a (const $ ke ()) (const $ kn ())
+        Void (compile2_ -> a) -> \ke kn -> a (ke ()) (kn ())
+
+compile2_ :: forall a s r . RE s a -> [Thread s r] -> [Thread s r] -> [Thread s r]
+compile2_ e =
+    case e of
+        Eps -> \ke _kn -> ke
+        Symbol i p -> \_ke kn -> [t kn] where
+          t :: [Thread s r] -> Thread s r
+          t k = Thread i $ \s ->
+            if p s then k else []
+        App (compile2_ -> a1) (compile2_ -> a2) -> \ke kn ->
+            a1
+                -- empty
+                (a2 ke kn)
+                -- non-empty
+                (a2 kn kn)
+        Alt (compile2_ -> a1) (compile2_ -> a2) ->
+            \ke kn -> a1 ke kn ++ a2 ke kn
+        Fmap f (compile2_ -> a) -> a
+        -- This is actually the point where we use the difference between
+        -- continuations. For the inner RE the empty continuation is a
+        -- "failing" one in order to avoid non-termination.
+        Rep g _f b (compile2_ -> a) ->
+            let combine continue stop =
+                    case g of
+                        Greedy -> continue ++ stop
+                        NonGreedy -> stop ++ continue
+                threads ke kn =
+                    combine
+                        (a [] (threads kn kn))
+                        ke
+            in threads
+        Void (compile2_ -> a) -> \ke kn -> a ke kn
