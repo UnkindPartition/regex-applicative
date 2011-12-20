@@ -82,7 +82,7 @@ few a = reverse <$> Rep NonGreedy (flip (:)) [] a
 
 -- | @s =~ a = match a s@
 (=~) :: [s] -> RE s a -> Maybe a
-s =~ a = match a s
+(=~) = flip match
 infix 2 =~
 
 -- | Attempt to match a string of symbols against the regular expression.
@@ -96,10 +96,10 @@ infix 2 =~
 -- >Nothing
 --
 match :: RE s a -> [s] -> Maybe a
-match re str =
+match re = let obj = compile re in \str ->
     listToMaybe $
     results $
-    foldl (flip step) (compile re) str
+    foldl (flip step) obj str
 
 -- | Find a string prefix which is matched by the regular expression.
 --
