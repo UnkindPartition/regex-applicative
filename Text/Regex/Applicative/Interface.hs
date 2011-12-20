@@ -17,6 +17,8 @@ instance Functor (RE s) where
 instance Applicative (RE s) where
     pure x = const x <$> Eps
     a1 <*> a2 = App a1 a2
+    a *> b = pure (const id) <*> Void a <*> b
+    a <* b = pure const <*> a <*> Void b
 
 instance Alternative (RE s) where
     a1 <|> a2 = Alt a1 a2

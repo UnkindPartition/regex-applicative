@@ -64,3 +64,4 @@ data RE s a where
                          -- for the folding function
         -> RE s a
         -> RE s b
+    Void :: RE s a -> RE s ()

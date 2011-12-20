@@ -48,3 +48,4 @@ compile2 e =
                         (a (\_ -> []) (\v -> let b' = f b v in threads b' kn kn))
                         (ke b)
             in threads b
+        Void (compile2 -> a) -> \ke kn -> a (const $ ke ()) (const $ kn ())
