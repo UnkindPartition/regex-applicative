@@ -4,6 +4,7 @@ import Text.Regex.Applicative.Reference
 import Control.Applicative
 import Control.Monad
 import Data.Traversable
+import Data.Maybe
 import Text.Printf
 
 import Test.SmallCheck
@@ -66,6 +67,11 @@ re8 = (,) <$> many (sym 'a' <|> sym 'b') <*> many (sym 'b' <|> sym 'c')
 
 prop re f (map f -> s) = reference re s == (s =~ re)
 
+-- Because we have 2 slightly different algorithms for recognition and parsing,
+-- we test that they agree
+testRecognitionAgainstParsing re f (map f -> s) =
+    isJust (s =~ re) == isJust (s =~ (re *> pure ()))
+
 tests =
     [ testGroup "Engine tests"
        [ t "re1" 10 $ prop re1 a
@@ -76,6 +82,16 @@ tests =
        , t "re6" 10 $ prop re6 a
        , t "re7"  7 $ prop re7 abc
        , t "re8"  7 $ prop re8 abc
+       ]
+    , testGroup "Recognition vs parsing"
+       [ t "re1" 10 $ testRecognitionAgainstParsing re1 a
+       , t "re2" 10 $ testRecognitionAgainstParsing re2 ab
+       , t "re3" 10 $ testRecognitionAgainstParsing re3 ab
+       , t "re4" 10 $ testRecognitionAgainstParsing re4 ab
+       , t "re5" 10 $ testRecognitionAgainstParsing re5 a
+       , t "re6" 10 $ testRecognitionAgainstParsing re6 a
+       , t "re7"  7 $ testRecognitionAgainstParsing re7 abc
+       , t "re8"  7 $ testRecognitionAgainstParsing re8 abc
        ]
     ]
     where
