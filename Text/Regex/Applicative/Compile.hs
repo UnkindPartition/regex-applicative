@@ -75,5 +75,6 @@ compile2_ e =
                     case g of
                         Greedy -> continue ++ stop
                         NonGreedy -> stop ++ continue
-            in \ke kn -> combine (a [] $ combine (a kn kn) kn) ke
+                threads ke kn = combine (a [] (threads kn kn)) ke
+            in threads
         Void (compile2_ -> a) -> a
