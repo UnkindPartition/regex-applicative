@@ -76,4 +76,4 @@ compile2_ e =
                         Greedy -> continue ++ stop
                         NonGreedy -> stop ++ continue
             in \ke kn -> combine (a [] $ combine (a kn kn) kn) ke
-        Void (compile2_ -> a) -> \ke kn -> a ke kn
+        Void (compile2_ -> a) -> a
