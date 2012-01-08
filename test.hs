@@ -65,6 +65,10 @@ re7 =
 
 re8 = (,) <$> many (sym 'a' <|> sym 'b') <*> many (sym 'b' <|> sym 'c')
 
+-- NB: we don't test these against the reference impl, 'cause it will loop!
+re9 = many (sym 'a' <|> empty) <* sym 'b'
+re10 = few (sym 'a' <|> empty) <* sym 'b'
+
 prop re f (map f -> s) = reference re s == (s =~ re)
 
 -- Because we have 2 slightly different algorithms for recognition and parsing,
@@ -92,6 +96,8 @@ tests =
        , t "re6" 10 $ testRecognitionAgainstParsing re6 a
        , t "re7"  7 $ testRecognitionAgainstParsing re7 abc
        , t "re8"  7 $ testRecognitionAgainstParsing re8 abc
+       , t "re8" 10 $ testRecognitionAgainstParsing re9 ab
+       , t "re8" 10 $ testRecognitionAgainstParsing re10 ab
        ]
     ]
     where
