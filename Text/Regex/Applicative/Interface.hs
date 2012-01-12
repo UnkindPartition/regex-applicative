@@ -13,6 +13,7 @@ import Text.Regex.Applicative.Object
 
 instance Functor (RE s) where
     fmap f x = Fmap f x
+    f <$ x = pure f <* x
 
 instance Applicative (RE s) where
     pure x = const x <$> Eps
