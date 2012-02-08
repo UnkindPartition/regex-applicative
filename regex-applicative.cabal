@@ -60,7 +60,7 @@ Source-repository this
 
 Library
   -- Packages needed in order to build this package.
-  Build-depends:       base >= 4.2 && < 4.5,
+  Build-depends:       base >= 4.2 && < 4.6,
                        containers >= 0.3 && < 0.5,
                        monads-tf == 0.1.*
 
