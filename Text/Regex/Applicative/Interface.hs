@@ -5,7 +5,6 @@ import Control.Applicative hiding (empty)
 import qualified Control.Applicative
 import Control.Arrow
 import Data.Traversable
-import Data.String
 import Data.Maybe
 import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Object
@@ -25,9 +24,6 @@ instance Alternative (RE s) where
     empty = Eps
     many a = reverse <$> Rep Greedy (flip (:)) [] a
     some a = (:) <$> a <*> many a
-
-instance (char ~ Char, string ~ String) => IsString (RE char string) where
-    fromString = string
 
 -- | Match and return a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
