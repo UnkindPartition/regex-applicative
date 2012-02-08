@@ -1,11 +1,10 @@
-{-# LANGUAGE GADTs, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -fno-do-lambda-eta-expansion -fno-warn-unused-imports #-}
 module Text.Regex.Applicative.Types where
 
 import Control.Applicative
 
 newtype ThreadId = ThreadId Int
-    deriving (Show, Eq, Ord, Num, Real, Enum, Integral)
 
 -- | A thread either is a result or corresponds to a symbol in the regular
 -- expression, which is expected by that thread.

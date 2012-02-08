@@ -115,7 +115,7 @@ compile =
     renumber
 
 renumber :: RE s a -> RE s a
-renumber e = flip evalState 1 $ go e
+renumber e = flip evalState (ThreadId 1) $ go e
   where
     go :: RE s a -> State ThreadId (RE s a)
     go e =
@@ -130,6 +130,6 @@ renumber e = flip evalState 1 $ go e
 
 fresh :: State ThreadId ThreadId
 fresh = do
-    i <- get
-    put $! i+1
-    return i
+    t@(ThreadId i) <- get
+    put $! ThreadId (i+1)
+    return t
