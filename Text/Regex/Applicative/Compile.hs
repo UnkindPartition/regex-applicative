@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, ScopedTypeVariables, ViewPatterns #-}
+{-# LANGUAGE GADTs, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
 module Text.Regex.Applicative.Compile (compile) where
 
@@ -26,20 +26,26 @@ compile2 e =
           t :: (a -> [Thread s r]) -> Thread s r
           t k = Thread i $ \s ->
             if p s then k s else []
-        App (compile2 -> a1) (compile2 -> a2) -> \ke kn ->
+        App n1 n2 ->
+            let a1 = compile2 n1
+                a2 = compile2 n2
+            in \ke kn ->
             a1
                 -- empty
                 (\a1_value -> a2 (ke . a1_value) (kn . a1_value))
                 -- non-empty
                 (\a1_value -> a2 (kn . a1_value) (kn . a1_value))
-        Alt (compile2 -> a1) (compile2 -> a2) ->
-            \ke kn -> a1 ke kn ++ a2 ke kn
-        Fmap f (compile2 -> a) -> \ke kn -> a (ke . f) (kn . f)
+        Alt n1 n2 ->
+            let a1 = compile2 n1
+                a2 = compile2 n2
+            in \ke kn -> a1 ke kn ++ a2 ke kn
+        Fmap f n -> let a = compile2 n in \ke kn -> a (ke . f) (kn . f)
         -- This is actually the point where we use the difference between
         -- continuations. For the inner RE the empty continuation is a
         -- "failing" one in order to avoid non-termination.
-        Rep g f b (compile2 -> a) ->
-            let combine continue stop =
+        Rep g f b n ->
+            let a = compile2 n
+                combine continue stop =
                     case g of
                         Greedy -> continue ++ stop
                         NonGreedy -> stop ++ continue
@@ -48,7 +54,7 @@ compile2 e =
                         (a (\_ -> []) (\v -> let b' = f b v in threads b' kn kn))
                         (ke b)
             in threads b
-        Void (compile2_ -> a) -> \ke kn -> a (ke ()) (kn ())
+        Void n -> let a = compile2_ n in \ke kn -> a (ke ()) (kn ())
 
 compile2_ :: forall a s r . RE s a -> [Thread s r] -> [Thread s r] -> [Thread s r]
 compile2_ e =
@@ -58,23 +64,29 @@ compile2_ e =
           t :: [Thread s r] -> Thread s r
           t k = Thread i $ \s ->
             if p s then k else []
-        App (compile2_ -> a1) (compile2_ -> a2) -> \ke kn ->
+        App n1 n2 ->
+            let a1 = compile2_ n1
+                a2 = compile2_ n2
+            in \ke kn ->
             a1
                 -- empty
                 (a2 ke kn)
                 -- non-empty
                 (a2 kn kn)
-        Alt (compile2_ -> a1) (compile2_ -> a2) ->
-            \ke kn -> a1 ke kn ++ a2 ke kn
-        Fmap f (compile2_ -> a) -> a
+        Alt n1 n2 ->
+            let a1 = compile2_ n1
+                a2 = compile2_ n2
+            in \ke kn -> a1 ke kn ++ a2 ke kn
+        Fmap _ n -> compile2_ n
         -- This is actually the point where we use the difference between
         -- continuations. For the inner RE the empty continuation is a
         -- "failing" one in order to avoid non-termination.
-        Rep g _f b (compile2_ -> a) ->
-            let combine continue stop =
+        Rep g _ _ n ->
+            let a = compile2_ n
+                combine continue stop =
                     case g of
                         Greedy -> continue ++ stop
                         NonGreedy -> stop ++ continue
                 threads ke kn = combine (a [] (threads kn kn)) ke
             in threads
-        Void (compile2_ -> a) -> a
+        Void n -> compile2_ n

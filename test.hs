@@ -1,4 +1,3 @@
-{-# LANGUAGE ViewPatterns #-}
 import Text.Regex.Applicative
 import Text.Regex.Applicative.Reference
 import Control.Applicative
@@ -69,12 +68,15 @@ re8 = (,) <$> many (sym 'a' <|> sym 'b') <*> many (sym 'b' <|> sym 'c')
 re9 = many (sym 'a' <|> empty) <* sym 'b'
 re10 = few (sym 'a' <|> empty) <* sym 'b'
 
-prop re f (map f -> s) = reference re s == (s =~ re)
+prop re f s =
+    let fs = map f s in
+    reference re fs == (fs =~ re)
 
 -- Because we have 2 slightly different algorithms for recognition and parsing,
 -- we test that they agree
-testRecognitionAgainstParsing re f (map f -> s) =
-    isJust (s =~ re) == isJust (s =~ (re *> pure ()))
+testRecognitionAgainstParsing re f s =
+    let fs = map f s in
+    isJust (fs =~ re) == isJust (fs =~ (re *> pure ()))
 
 tests =
     [ testGroup "Engine tests"
