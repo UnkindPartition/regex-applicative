@@ -32,7 +32,7 @@ import Text.Regex.Applicative.Types
 import qualified Text.Regex.Applicative.StateQueue as SQ
 import qualified Text.Regex.Applicative.Compile as Compile
 import Data.Maybe
-import Control.Monad.State
+import Control.Monad.Trans.State
 import Control.Applicative hiding (empty)
 
 -- | The state of the engine is represented as a \"regex object\" of type
@@ -128,7 +128,7 @@ renumber e = flip evalState 1 $ go e
             Rep g f b a -> Rep g f b <$> go a
             Void a -> Void <$> go a
 
-fresh :: (MonadState m, StateType m ~ ThreadId) => m ThreadId
+fresh :: State ThreadId ThreadId
 fresh = do
     i <- get
     put $! i+1
