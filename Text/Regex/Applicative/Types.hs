@@ -1,4 +1,3 @@
-{-# LANGUAGE GADTs, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-do-lambda-eta-expansion -fno-warn-unused-imports #-}
 module Text.Regex.Applicative.Types where
 
@@ -52,16 +51,16 @@ data Greediness = Greedy | NonGreedy
 --
 -- * 'some' @ra@ matches concatenation of one or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
-data RE s a where
-    Eps :: RE s a
-    Symbol :: ThreadId -> (s -> Bool) -> RE s s
-    Alt :: RE s a -> RE s a -> RE s a
-    App :: RE s (a -> b) -> RE s a -> RE s b
-    Fmap :: (a -> b) -> RE s a -> RE s b
-    Rep :: Greediness    -- repetition may be greedy or not
+class RE re where
+    reEps :: re s a
+    reSymbol :: ThreadId -> (s -> Bool) -> re s s
+    reAlt :: re s a -> re s a -> re s a
+    reApp :: re s (a -> b) -> re s a -> re s b
+    reFmap :: (a -> b) -> re s a -> re s b
+    reRep :: Greediness    -- repetition may be greedy or not
         -> (b -> a -> b) -- folding function (like in foldl)
         -> b             -- the value for zero matches, and also the initial value
                          -- for the folding function
-        -> RE s a
-        -> RE s b
-    Void :: RE s a -> RE s ()
+        -> re s a
+        -> re s b
+    reVoid :: re s a -> re s ()
