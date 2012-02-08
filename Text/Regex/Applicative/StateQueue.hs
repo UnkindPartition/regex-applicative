@@ -1,4 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
 module Text.Regex.Applicative.StateQueue
     ( StateQueue
     , empty
@@ -32,7 +31,7 @@ insertUnique
     -> a
     -> StateQueue a
     -> StateQueue a
-insertUnique i v sq@StateQueue {..} =
+insertUnique i v sq@StateQueue { ids = ids, elements = elements } =
     if i `IntSet.member` ids
         then sq
         else sq { elements = v : elements
