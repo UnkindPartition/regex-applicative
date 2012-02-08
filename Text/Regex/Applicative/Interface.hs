@@ -1,5 +1,4 @@
-{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies, TupleSections,
-    ScopedTypeVariables #-}
+{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
@@ -132,7 +131,7 @@ findFirstPrefix re str = go (compile re) str Nothing
     go obj str resOld =
         case walk emptyObject $ threads obj of
             (obj', resThis) ->
-                let res = ((,str) <$> resThis) <|> resOld
+                let res = ((flip (,) str) <$> resThis) <|> resOld
                 in
                     case str of
                         [] -> res
@@ -159,7 +158,7 @@ findLongestPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findLongestPrefix re str = go (compile re) str Nothing
     where
     go obj str resOld =
-        let res = (fmap (,str) $ listToMaybe $ results obj) <|> resOld
+        let res = (fmap (flip (,) str) $ listToMaybe $ results obj) <|> resOld
         in
             case str of
                 [] -> res
