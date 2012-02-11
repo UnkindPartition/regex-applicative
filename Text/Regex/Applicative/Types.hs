@@ -65,7 +65,7 @@ data Greediness = Greedy | NonGreedy
 --
 -- * 'some' @ra@ matches concatenation of one or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
-class RE re where
+class Regexp re where
     reEps :: re s a
     reSymbol :: ThreadId -> (s -> Bool) -> re s s
     reAlt :: re s a -> re s a -> re s a
