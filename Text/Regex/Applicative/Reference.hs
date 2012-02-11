@@ -47,19 +47,20 @@ getChar = P $ \s ->
 re2monad :: RE s a -> P s a
 re2monad r =
     case r of
-        Eps -> return $ error "eps"
-        Symbol _ p -> do
-            c <- getChar
-            if p c then return c else empty
-        Alt a1 a2 -> re2monad a1 <|> re2monad a2
-        App a1 a2 -> re2monad a1 <*> re2monad a2
-        Fmap f a -> fmap f $ re2monad a
-        Rep g f b a -> rep b
-            where
-            am = re2monad a
-            rep b = combine (do a <- am; rep $ f b a) (return b)
-            combine a b = case g of Greedy -> a <|> b; NonGreedy -> b <|> a
-        Void a -> re2monad a >> return ()
+instance Regexp P where
+    reEps -> return $ error "eps"
+    reSymbol _ p -> do
+        c <- getChar
+        if p c then return c else empty
+    reAlt a1 a2 -> re2monad a1 <|> re2monad a2
+    reApp a1 a2 -> re2monad a1 <*> re2monad a2
+    reFmap f a -> fmap f $ re2monad a
+    reRep g f b a -> rep b
+        where
+        am = re2monad a
+        rep b = combine (do a <- am; rep $ f b a) (return b)
+        combine a b = case g of Greedy -> a <|> b; NonGreedy -> b <|> a
+    reVoid a -> re2monad a >> return ()
 
 runP :: P s a -> [s] -> Maybe a
 runP m s = case filter (null . snd) $ unP m s of
