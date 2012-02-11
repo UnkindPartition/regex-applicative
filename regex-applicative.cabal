@@ -62,7 +62,7 @@ Library
   -- Packages needed in order to build this package.
   Build-depends:       base,
                        containers >= 0.3 && < 0.5,
-                       monads-tf == 0.1.*
+                       transformers
 
 
   -- Modules exported by the library.
@@ -78,4 +78,8 @@ Library
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         
   
-  GHC-Options:     -O2 -Wall -fno-warn-name-shadowing -fno-warn-missing-signatures
+  GHC-Options:     -O2
+                   -Wall
+                   -fno-warn-name-shadowing
+                   -fno-warn-missing-signatures
+                   -fno-warn-orphans
