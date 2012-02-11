@@ -6,7 +6,6 @@ import Control.Arrow (second)
 import Data.Traversable
 import Data.Maybe
 import Text.Regex.Applicative.Types
-import qualified Text.Regex.Applicative.Types as Types
 import Text.Regex.Applicative.Object
 
 instance Functor (RE s) where
