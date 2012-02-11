@@ -3,6 +3,10 @@
 module Text.Regex.Applicative.Types where
 
 import Control.Applicative
+-- The above import is needed for haddock to properly generate links to
+-- Applicative methods. But it's not actually used in the code, hence
+-- -fno-warn-unused-imports.
+
 import Control.Monad.Trans.State
 
 newtype ThreadId = ThreadId Int
