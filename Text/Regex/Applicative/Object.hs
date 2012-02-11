@@ -9,7 +9,6 @@
 --
 -- This is a low-level interface to the regex engine.
 --------------------------------------------------------------------
-{-# LANGUAGE TypeFamilies, GADTs #-}
 module Text.Regex.Applicative.Object
     ( ReObject
     , compile

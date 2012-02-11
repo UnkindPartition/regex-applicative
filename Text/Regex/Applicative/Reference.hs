@@ -10,7 +10,6 @@
 -- Reference implementation (using backtracking)
 --------------------------------------------------------------------
 
-{-# LANGUAGE GADTs #-}
 module Text.Regex.Applicative.Reference (reference) where
 import Prelude hiding (getChar)
 import Text.Regex.Applicative.Types
