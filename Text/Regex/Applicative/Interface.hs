@@ -3,31 +3,34 @@
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
 import qualified Control.Applicative
-import Control.Arrow
+import Control.Arrow (second)
 import Data.Traversable
 import Data.Maybe
 import Text.Regex.Applicative.Types
+import qualified Text.Regex.Applicative.Types as Types
 import Text.Regex.Applicative.Object
 
 instance Functor (RE s) where
-    fmap f x = Fmap f x
-    f <$ x = pure f <* x
+    fmap f (RE x) = RE $ reFmap f x
+    -- f <$ x = pure f <* x
 
 instance Applicative (RE s) where
-    pure x = const x <$> Eps
-    a1 <*> a2 = App a1 a2
-    a *> b = pure (const id) <*> Void a <*> b
-    a <* b = pure const <*> a <*> Void b
+    pure x = const x <$> reEps
+    a1 <*> a2 = reApp a1 a2
+    {-
+    a *> b = pure (const id) <*> reVoid a <*> b
+    a <* b = pure const <*> a <*> reVoid b
+    -}
 
 instance Alternative (RE s) where
-    a1 <|> a2 = Alt a1 a2
-    empty = Eps
-    many a = reverse <$> Rep Greedy (flip (:)) [] a
-    some a = (:) <$> a <*> many a
+    a1 <|> a2 = reAlt a1 a2
+    empty = reEps
+    -- many a = reverse <$> reRep Greedy (flip (:)) [] a
+    -- some a = (:) <$> a <*> many a
 
 -- | Match and return a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
-psym p = Symbol (error "Not numbered symbol") p
+psym p = reSymbol (error "Not numbered symbol") p
 
 -- | Match and return the given symbol
 sym :: Eq s => s -> RE s s
@@ -61,7 +64,7 @@ string = traverse sym
 -- as many as possible ('Greedy') or as few as possible ('NonGreedy') instances
 -- of the underlying expression.
 reFoldl :: Greediness -> (b -> a -> b) -> b -> RE s a -> RE s b
-reFoldl g f b a = Rep g f b a
+reFoldl g f b a = reRep g f b a
 
 -- | Match zero or more instances of the given expression, but as
 -- few of them as possible (i.e. /non-greedily/). A greedy equivalent of 'few'
@@ -74,7 +77,7 @@ reFoldl g f b a = Rep g f b a
 -- >Text.Regex.Applicative> findFirstPrefix (many anySym  <* "b") "ababab"
 -- >Just ("ababa","")
 few :: RE s a -> RE s [a]
-few a = reverse <$> Rep NonGreedy (flip (:)) [] a
+few a = reverse <$> reRep NonGreedy (flip (:)) [] a
 
 -- | @s =~ a = match a s@
 (=~) :: [s] -> RE s a -> Maybe a
