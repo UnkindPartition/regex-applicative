@@ -1,9 +1,24 @@
+{-# LANGUAGE Rank2Types #-}
 {-# OPTIONS_GHC -fno-do-lambda-eta-expansion -fno-warn-unused-imports #-}
 module Text.Regex.Applicative.Types where
 
 import Control.Applicative
+import Control.Monad.Trans.State
 
 newtype ThreadId = ThreadId Int
+
+newtype Numbered f s a = Numbered
+    { getNumbered :: State ThreadId (f s a) }
+
+newtype Compiled s a = Compiled
+    { getCompiled ::
+        forall r .
+        (a -> [Thread s r]) ->
+        (a -> [Thread s r]) ->
+        [Thread s r]
+    }
+
+newtype RE s a = RE { unRE :: Numbered Compiled s a }
 
 -- | A thread either is a result or corresponds to a symbol in the regular
 -- expression, which is expected by that thread.
