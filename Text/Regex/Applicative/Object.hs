@@ -112,24 +112,30 @@ compile :: RE s r -> ReObject s r
 compile =
     fromThreads .
     flip Compile.compile (\x -> [Accept x]) .
-    renumber
+    flip evalState (ThreadId 1) .
+    getNumbered .
+    unRE
 
-renumber :: RE s a -> RE s a
-renumber e = flip evalState 1 $ go e
-  where
-    go :: RE s a -> State ThreadId (RE s a)
-    go e =
-        case e of
-            Eps -> return Eps
-            Symbol _ p -> Symbol <$> fresh <*> pure p
-            Alt a1 a2 -> Alt <$> go a1 <*> go a2
-            App a1 a2 -> App <$> go a1 <*> go a2
-            Fmap f a -> Fmap f <$> go a
-            Rep g f b a -> Rep g f b <$> go a
-            Void a -> Void <$> go a
+instance Regexp f => Regexp (Numbered f) where
+    reEps = Numbered $ return reEps
+    reSymbol _ p = Numbered $ reSymbol <$> fresh <*> pure p
+    reAlt a1 a2 = Numbered $ reAlt <$> getNumbered a1 <*> getNumbered a2
+    reApp a1 a2 = Numbered $ reApp <$> getNumbered a1 <*> getNumbered a2
+    reFmap f a = Numbered $ reFmap f <$> getNumbered a
+    reRep g f b a = Numbered $ reRep g f b <$> getNumbered a
+    reVoid a = Numbered $ reVoid <$> getNumbered a
+
+instance Regexp RE where
+    reEps = RE reEps
+    reSymbol t p = RE $ reSymbol t p
+    reAlt a1 a2 = RE $ reAlt (unRE a1) (unRE a2)
+    reApp a1 a2 = RE $ reApp (unRE a1) (unRE a2)
+    reFmap f a = RE $ reFmap f (unRE a)
+    reRep g f b a = RE $ reRep g f b (unRE a)
+    reVoid a = RE $ reVoid (unRE a)
 
 fresh :: State ThreadId ThreadId
 fresh = do
-    i <- get
-    put $! i+1
-    return i
+    t@(ThreadId i) <- get
+    put $! ThreadId (i+1)
+    return t
