@@ -1,6 +1,13 @@
 Changes
 =======
 
+0.2
+---
+* Infix matching functions
+* Improved documentation
+* Improved performance
+* Improved portability
+
 0.1.5
 -----
 * Expose Object interface
