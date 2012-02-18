@@ -1,10 +1,10 @@
-{-# LANGUAGE GADTs, ScopedTypeVariables #-}
+{-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
 module Text.Regex.Applicative.Compile (compile) where
 
 import Text.Regex.Applicative.Types
 
-compile :: forall a s r . RE s a -> (a -> [Thread s r]) -> [Thread s r]
+compile :: RE s a -> (a -> [Thread s r]) -> [Thread s r]
 compile e k = compile2 e k k
 
 -- The whole point of this module is this function, compile2, which needs to be
@@ -18,12 +18,12 @@ compile e k = compile2 e k k
 --
 -- compile2 function takes two continuations: one when the match is empty and
 -- one when the match is non-empty. See the "Rep" case for the reason.
-compile2 :: forall a s r . RE s a -> (a -> [Thread s r]) -> (a -> [Thread s r]) -> [Thread s r]
+compile2 :: RE s a -> (a -> [Thread s r]) -> (a -> [Thread s r]) -> [Thread s r]
 compile2 e =
     case e of
         Eps -> \ke _kn -> ke $ error "empty"
         Symbol i p -> \_ke kn -> [t kn] where
-          t :: (a -> [Thread s r]) -> Thread s r
+          -- t :: (a -> [Thread s r]) -> Thread s r
           t k = Thread i $ \s ->
             if p s then k s else []
         App n1 n2 ->
@@ -56,12 +56,12 @@ compile2 e =
             in threads b
         Void n -> let a = compile2_ n in \ke kn -> a (ke ()) (kn ())
 
-compile2_ :: forall a s r . RE s a -> [Thread s r] -> [Thread s r] -> [Thread s r]
+compile2_ :: RE s a -> [Thread s r] -> [Thread s r] -> [Thread s r]
 compile2_ e =
     case e of
         Eps -> \ke _kn -> ke
         Symbol i p -> \_ke kn -> [t kn] where
-          t :: [Thread s r] -> Thread s r
+          -- t :: [Thread s r] -> Thread s r
           t k = Thread i $ \s ->
             if p s then k else []
         App n1 n2 ->

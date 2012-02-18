@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, FlexibleInstances, TypeFamilies, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
@@ -243,8 +243,7 @@ gotResult _ = False
 -- 3.3. If they are produced on the different steps, choose the later one (since
 -- they have the same prefixes, later means longer)
 findExtremalInfix
-    :: forall s a .
-       -- function to combine a later result (first arg) to an earlier one (second
+    :: -- function to combine a later result (first arg) to an earlier one (second
        -- arg)
        (InfixMatchingState s a -> InfixMatchingState s a -> InfixMatchingState s a)
     -> RE s a
@@ -256,10 +255,12 @@ findExtremalInfix newOrOld re str =
         r@GotResult{} ->
             Just (prefixStr r, result r, postfixStr r)
     where
+    {-
     go :: ReObject s ((Int, [s]), a)
        -> [s]
        -> InfixMatchingState s a
        -> InfixMatchingState s a
+    -}
     go obj str resOld =
         let resThis =
                 foldl
