@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 import Text.Regex.Applicative
 import Text.Regex.Applicative.Reference
 import Control.Applicative
@@ -6,10 +7,12 @@ import Data.Traversable
 import Data.Maybe
 import Text.Printf
 
+import Test.HUnit
 import Test.SmallCheck
 import Test.SmallCheck.Series
 import Test.Framework
 import Test.Framework.Providers.SmallCheck
+import Test.Framework.Providers.HUnit
 
 -- Small alphabets as SmallCheck's series
 newtype A = A { a :: Char } deriving Show
@@ -109,8 +112,63 @@ tests =
        , t "re8" 10 $ testRecognitionAgainstParsing re10 ab
        ]
     , testProperty "withMatched" prop_withMatched
+    , testGroup "Tests for matching functions"
+        [ testGroup "findFirstPrefix"
+            [ u "t1"
+                (findFirstPrefix ("a" <|> "ab") "abc")
+                (Just ("a","bc"))
+            , u "t2"
+                (findFirstPrefix ("ab" <|> "a") "abc")
+                (Just ("ab","c"))
+            , u "t3"
+                (findFirstPrefix "bc" "abc")
+                Nothing
+            ]
+        , testGroup "findFirstInfix"
+            [ u "t1"
+                (findFirstInfix ("a" <|> "ab") "tabc")
+                (Just ("t", "a","bc"))
+            , u "t2"
+                (findFirstInfix ("ab" <|> "a") "tabc")
+                (Just ("t", "ab","c"))
+            ]
+        , testGroup "findLongestPrefix"
+            [ u "t1"
+                (findLongestPrefix ("a" <|> "ab") "abc")
+                (Just ("ab","c"))
+            , u "t2"
+                (findLongestPrefix ("ab" <|> "a") "abc")
+                (Just ("ab","c"))
+            , u "t3"
+                (findLongestPrefix "bc" "abc")
+                Nothing
+            ]
+        , testGroup "findLongestInfix"
+            [ u "t1"
+                (findLongestPrefix ("a" <|> "ab") "tabc")
+                (Just ("t", "ab","c"))
+            , u "t2"
+                (findLongestPrefix ("ab" <|> "a") "tabc")
+                (Just ("t", "ab","c"))
+            , u "t3"
+                (findLongestPrefix "bc" "tabc")
+                Nothing
+            ]
+        , testGroup "findShortestPrefix"
+            [ u "t1"
+                (findShortestPrefix ("a" <|> "ab") "abc")
+                (Just ("a","bc"))
+            , u "t2"
+                (findShortestPrefix ("ab" <|> "a") "abc")
+                (Just ("a","bc"))
+            , u "t3"
+                (findShortestPrefix "bc" "abc")
+                Nothing
+            ]
+        ]
     ]
     where
     t name n = withDepth n . testProperty name
+    u name real ideal = testCase name (assertEqual "" real ideal)
 
 main = defaultMain tests
