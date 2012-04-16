@@ -2,10 +2,14 @@
 {-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
 module Text.Regex.Applicative.Compile (compile) where
 
+import Prelude hiding ((.))
 import Text.Regex.Applicative.Types
 
 compile :: RE s a -> (a -> [Thread s r]) -> [Thread s r]
 compile e k = compile2 e k k
+
+infixr 9 .
+(f . g) x = f $! g x
 
 -- The whole point of this module is this function, compile2, which needs to be
 -- compiled with -fno-do-lambda-eta-expansion for efficiency.
