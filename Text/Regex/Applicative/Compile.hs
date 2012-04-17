@@ -3,7 +3,11 @@
 module Text.Regex.Applicative.Compile (compile) where
 
 import Prelude hiding ((.))
+import Control.Monad.Trans.State
 import Text.Regex.Applicative.Types
+import Control.Applicative
+import Data.Maybe
+import qualified Data.IntMap as IntMap
 
 compile :: RE s a -> (a -> [Thread s r]) -> [Thread s r]
 compile e k = compile2 e (SingleCont k)
@@ -70,51 +74,64 @@ compile2 e =
         -- "failing" one in order to avoid non-termination.
         Rep g f b n ->
             let a = compile2 n
-                combine continue stop =
-                    case g of
-                        Greedy -> continue ++ stop
-                        NonGreedy -> stop ++ continue
                 threads b k =
-                    combine
+                    combine g
                         (a $ EmptyNonEmpty (\_ -> []) (\v -> let b' = f b v in threads b' (SingleCont $ nonEmptyCont k)))
                         (emptyCont k b)
             in threads b
         Void n -> let a = compile2_ n in \k -> a $ fmap ($ ()) k
 
+data FSMState
+    = SAccept
+    | STransition ThreadId
+
+type FSMMap s = IntMap.IntMap (s -> Bool, [FSMState])
+
+mkNFA :: RE s a -> ([FSMState], (FSMMap s))
+mkNFA e =
+    flip runState IntMap.empty $
+        go e [SAccept]
+  where
+  go :: RE s a -> [FSMState] -> State (FSMMap s) [FSMState]
+  go e k =
+    case e of
+        Eps -> return k
+        Symbol i@(ThreadId n) p -> do
+            modify $ IntMap.insert n $
+                (p, k)
+            return [STransition i]
+        App n1 n2 -> go n1 =<< go n2 k
+        Alt n1 n2 -> (++) <$> go n1 k <*> go n2 k
+        Fmap _ n -> go n k
+        Rep g _ _ n ->
+            let entries = findEntries n
+                cont = combine g entries k
+            in
+            -- return value of 'go' is ignored -- it should be a subset of
+            -- 'cont'
+            go n cont >> return cont
+        Void n -> go n k
+
+  findEntries :: RE s a -> [FSMState]
+  findEntries e =
+    -- A simple (although a bit inefficient) way to find all entry points is
+    -- just to use 'go'
+    evalState (go e []) IntMap.empty
+
 compile2_ :: RE s a -> Cont [Thread s r] -> [Thread s r]
 compile2_ e =
-    case e of
-        Eps -> \k -> emptyCont k
-        Symbol i p -> \k -> [t $ nonEmptyCont k] where
-          -- t :: [Thread s r] -> Thread s r
-          t k = Thread i $ \s ->
-            if p s then k else []
-        App n1 n2 ->
-            let a1 = compile2_ n1
-                a2 = compile2_ n2
-            in \k ->
-                case k of
-                    SingleCont {} -> a1 $ SingleCont $ a2 k
-                    EmptyNonEmpty ke kn ->
-                        a1 $ EmptyNonEmpty
-                            -- empty
-                            (a2 $ EmptyNonEmpty ke kn)
-                            -- non-empty
-                            (a2 $ EmptyNonEmpty kn kn)
-        Alt n1 n2 ->
-            let a1 = compile2_ n1
-                a2 = compile2_ n2
-            in \k -> a1 k ++ a2 k
-        Fmap _ n -> compile2_ n
-        -- This is actually the point where we use the difference between
-        -- continuations. For the inner RE the empty continuation is a
-        -- "failing" one in order to avoid non-termination.
-        Rep g _ _ n ->
-            let a = compile2_ n
-                combine continue stop =
-                    case g of
-                        Greedy -> continue ++ stop
-                        NonGreedy -> stop ++ continue
-                threads k = combine (a $ EmptyNonEmpty [] (threads $ SingleCont $ nonEmptyCont k)) (emptyCont k)
-            in threads
-        Void n -> compile2_ n
+    let (entries, fsmap) = mkNFA e
+        mkThread _ k1 (STransition i@(ThreadId n)) =
+            let (p, cont) = fromMaybe (error "Unknown id") $ IntMap.lookup n fsmap
+            in [Thread i $ \s ->
+                if p s
+                    then concatMap (mkThread k1 k1) cont
+                    else []]
+        mkThread k0 _ SAccept = k0
+
+    in \k -> concatMap (mkThread (emptyCont k) (nonEmptyCont k)) entries
+
+combine g continue stop =
+    case g of
+        Greedy -> continue ++ stop
+        NonGreedy -> stop ++ continue
