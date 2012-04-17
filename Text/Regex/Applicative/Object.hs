@@ -32,6 +32,7 @@ import Text.Regex.Applicative.Types
 import qualified Text.Regex.Applicative.StateQueue as SQ
 import qualified Text.Regex.Applicative.Compile as Compile
 import Data.Maybe
+import Data.List
 import Control.Monad.Trans.State
 import Control.Applicative hiding (empty)
 
@@ -50,7 +51,7 @@ threads (ReObject sq) = SQ.getElements sq
 -- threads come from the same 'ReObject', unless you know what you're doing.
 -- However, it should be safe to filter out or rearrange threads.
 fromThreads :: [Thread s r] -> ReObject s r
-fromThreads ts = foldl (flip addThread) emptyObject ts
+fromThreads ts = foldl' (flip addThread) emptyObject ts
 
 -- | Check whether a thread is a result thread
 isResult :: Thread s r -> Bool
@@ -84,7 +85,7 @@ step s (ReObject sq) =
             case t of
                 Accept {} -> q
                 Thread _ c ->
-                    foldl (\q x -> addThread x q) q $ c s
+                    foldl' (\q x -> addThread x q) q $ c s
         newQueue = SQ.fold accum emptyObject sq
     in newQueue
 

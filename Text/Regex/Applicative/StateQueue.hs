@@ -9,10 +9,11 @@ module Text.Regex.Applicative.StateQueue
 
 import Prelude hiding (read, lookup, replicate)
 import qualified Data.IntSet as IntSet
+import Data.List (foldl')
 
 data StateQueue a = StateQueue
     { elements :: [a]
-    , ids :: IntSet.IntSet
+    , ids :: !IntSet.IntSet
     }
 
 getElements :: StateQueue a -> [a]
@@ -47,4 +48,4 @@ insert v sq =
 
 {-# INLINE fold #-}
 fold :: (a -> x -> a) -> a -> StateQueue x -> a
-fold f acc0 sq = foldl f acc0 (reverse $ elements sq)
+fold f acc0 sq = foldl' f acc0 (reverse $ elements sq)
