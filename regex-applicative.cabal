@@ -60,7 +60,7 @@ Source-repository this
 
 Library
   -- Packages needed in order to build this package.
-  Build-depends:       base,
+  Build-depends:       base < 5,
                        containers,
                        transformers
 
