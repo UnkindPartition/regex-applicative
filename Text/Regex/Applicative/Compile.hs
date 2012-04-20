@@ -2,7 +2,6 @@
 {-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
 module Text.Regex.Applicative.Compile (compile) where
 
-import Prelude hiding ((.))
 import Control.Monad.Trans.State
 import Text.Regex.Applicative.Types
 import Control.Applicative
@@ -11,9 +10,6 @@ import qualified Data.IntMap as IntMap
 
 compile :: RE s a -> (a -> [Thread s r]) -> [Thread s r]
 compile e k = compile2 e (SingleCont k)
-
-infixr 9 .
-(f . g) x = f $! g x
 
 data Cont a = SingleCont !a | EmptyNonEmpty !a !a
 
