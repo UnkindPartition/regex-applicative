@@ -1,0 +1,37 @@
+% regexapplicative-Rr.tex
+\begin{hcarentry}[new]{regex-applicative}
+\report{Roman Cheplyaka}%11/11
+\status{active development}
+\makeheader
+
+regex-applicative is aimed to be an efficient and easy to use parsing combinator library for Haskell based on regular expressions.
+
+Regular expressions have Perl-like (left-biased) semantics to satisfy most of
+the daily regex needs, but also allow longest matching prefix search
+useful for
+lexical analysis.
+
+For example, the following code finds filename extensions:
+
+\begin{verbatim}
+import Text.Regex.Applicative
+
+getExtension :: String -> Maybe String
+getExtension str =
+    str =~
+        many anySym *>
+        sym '.'     *>
+        many anySym
+\end{verbatim}
+
+\noindent
+More examples can be found on the
+\href{https://github.com/feuerbach/regex-applicative/wiki/Examples}
+{wiki}.
+
+\FurtherReading
+\begin{compactitem}
+  \item \url{http://hackage.haskell.org/package/regex-applicative}
+  \item \url{http://github.com/feuerbach/regex-applicative}
+\end{compactitem}
+\end{hcarentry}
