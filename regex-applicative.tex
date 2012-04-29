@@ -4,28 +4,24 @@
 \status{active development}
 \makeheader
 
-regex-applicative is aimed to be an efficient and easy to use parsing combinator library for Haskell based on regular expressions.
+regex-applicative is aimed to be an efficient and easy to use parsing combinator
+library for Haskell based on regular expressions.
 
-Regular expressions have Perl-like (left-biased) semantics to satisfy most of
-the daily regex needs, but also allow longest matching prefix search
-useful for
-lexical analysis.
+There are several ways in which one can specify what part of the string should
+be matched: the whole string, a prefix or an arbitrary part ("leftmost infix")
+of the string.
 
-For example, the following code finds filename extensions:
+Additionally, for prefix and infix modes, one can demand either
+the longest part, the shortest part or the first (in the left-biased ordering)
+part.
 
-\begin{verbatim}
-import Text.Regex.Applicative
+Finally, other things being equal, submatches are chosen using left bias.
 
-getExtension :: String -> Maybe String
-getExtension str =
-    str =~
-        many anySym *>
-        sym '.'     *>
-        many anySym
-\end{verbatim}
+Recently the performance has been improved by using more efficient algorithm for
+the parts of the regular expression whose result is not used.
 
 \noindent
-More examples can be found on the
+Example code can be found on the
 \href{https://github.com/feuerbach/regex-applicative/wiki/Examples}
 {wiki}.
 
