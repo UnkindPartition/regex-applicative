@@ -72,6 +72,13 @@ prop re f s =
     let fs = map f s in
     reference re fs == (fs =~ re)
 
+prop_withMatched =
+    let re = withMatched $ many (string "a" <|> string "ba")
+    in \str ->
+        case map ab str =~ re of
+            Nothing -> True
+            Just (x, y) -> concat x == y
+
 -- Because we have 2 slightly different algorithms for recognition and parsing,
 -- we test that they agree
 testRecognitionAgainstParsing re f s =
@@ -101,6 +108,7 @@ tests =
        , t "re8" 10 $ testRecognitionAgainstParsing re9 ab
        , t "re8" 10 $ testRecognitionAgainstParsing re10 ab
        ]
+    , testProperty "withMatched" prop_withMatched
     ]
     where
     t name n = withDepth n . testProperty name
