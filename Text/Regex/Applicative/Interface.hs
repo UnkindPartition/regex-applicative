@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies, GADTs #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
@@ -79,6 +79,21 @@ reFoldl g f b a = Rep g f b a
 -- >Just ("ababa","")
 few :: RE s a -> RE s [a]
 few a = reverse <$> Rep NonGreedy (flip (:)) [] a
+
+-- | Return matched symbols as part of the return value
+withMatched :: RE s a -> RE s (a, [s])
+withMatched Eps = flip (,) [] <$> Eps
+withMatched x@(Symbol _ _) = (id &&& pure) <$> x
+withMatched (Alt a b) = withMatched a <|> withMatched b
+withMatched (App a b) =
+    (\(f, s) (x, t) -> (f x, s ++ t)) <$>
+        withMatched a <*>
+        withMatched b
+withMatched (Fmap f x) = (f *** id) <$> withMatched x
+withMatched (Rep gr f a0 x) =
+    Rep gr (\(a, s) (x, t) -> (f a x, s ++ t)) (a0, []) (withMatched x)
+-- N.B.: this ruins the Void optimization
+withMatched (Void x) = (const () *** id) <$> withMatched x
 
 -- | @s =~ a = match a s@
 (=~) :: [s] -> RE s a -> Maybe a

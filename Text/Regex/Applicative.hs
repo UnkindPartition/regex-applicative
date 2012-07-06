@@ -20,6 +20,7 @@ module Text.Regex.Applicative
     , reFoldl
     , Greediness(..)
     , few
+    , withMatched
     , match
     , (=~)
     , findFirstPrefix
