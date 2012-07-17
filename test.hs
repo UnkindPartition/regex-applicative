@@ -145,14 +145,14 @@ tests =
             ]
         , testGroup "findLongestInfix"
             [ u "t1"
-                (findLongestPrefix ("a" <|> "ab") "tabc")
+                (findLongestInfix ("a" <|> "ab") "tabc")
                 (Just ("t", "ab","c"))
             , u "t2"
-                (findLongestPrefix ("ab" <|> "a") "tabc")
+                (findLongestInfix ("ab" <|> "a") "tabc")
                 (Just ("t", "ab","c"))
             , u "t3"
-                (findLongestPrefix "bc" "tabc")
-                Nothing
+                (findLongestInfix "bc" "tabc")
+                (Just ("ta", "bc",""))
             ]
         , testGroup "findShortestPrefix"
             [ u "t1"
