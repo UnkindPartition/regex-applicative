@@ -149,8 +149,8 @@ findFirstPrefix re str = go (compile re) str Nothing
                 let res = ((flip (,) str) <$> resThis) <|> resOld
                 in
                     case str of
-                        [] -> res
                         _ | failed obj' -> res
+                        [] -> res
                         (s:ss) -> go (step s obj') ss res
 
 -- | Find the longest string prefix which is matched by the regular expression.
@@ -176,8 +176,8 @@ findLongestPrefix re str = go (compile re) str Nothing
         let res = (fmap (flip (,) str) $ listToMaybe $ results obj) <|> resOld
         in
             case str of
-                [] -> res
                 _ | failed obj -> res
+                [] -> res
                 (s:ss) -> go (step s obj) ss res
 
 -- | Find the shortest prefix (analogous to 'findLongestPrefix')
@@ -187,10 +187,10 @@ findShortestPrefix re str = go (compile re) str
     go obj str =
         case results obj of
             r : _ -> Just (r, str)
-            [] ->
+            _ | failed obj -> Nothing
+            _ ->
                 case str of
                     [] -> Nothing
-                    _ | failed obj -> Nothing
                     s:ss -> go (step s obj) ss
 
 -- | Find the leftmost substring that is matched by the regular expression.
