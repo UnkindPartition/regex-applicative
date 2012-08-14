@@ -44,7 +44,7 @@ nonEmptyCont k =
 compile2 :: RE s a -> Cont (a -> [Thread s r]) -> [Thread s r]
 compile2 e =
     case e of
-        Eps -> \k -> emptyCont k $ error "empty"
+        Eps -> \k -> emptyCont k ()
         Symbol i p -> \k -> [t $ nonEmptyCont k] where
           -- t :: (a -> [Thread s r]) -> Thread s r
           t k = Thread i $ \s ->
@@ -64,6 +64,7 @@ compile2 e =
             let a1 = compile2 n1
                 a2 = compile2 n2
             in \k -> a1 k ++ a2 k
+        Fail -> const []
         Fmap f n -> let a = compile2 n in \k -> a $ fmap (. f) k
         -- This is actually the point where we use the difference between
         -- continuations. For the inner RE the empty continuation is a
@@ -98,6 +99,7 @@ mkNFA e =
             return [STransition i]
         App n1 n2 -> go n1 =<< go n2 k
         Alt n1 n2 -> (++) <$> go n1 k <*> go n2 k
+        Fail -> return []
         Fmap _ n -> go n k
         Rep g _ _ n ->
             let entries = findEntries n

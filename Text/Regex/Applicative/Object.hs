@@ -125,6 +125,7 @@ renumber e = flip evalState (ThreadId 1) $ go e
             Symbol _ p -> Symbol <$> fresh <*> pure p
             Alt a1 a2 -> Alt <$> go a1 <*> go a2
             App a1 a2 -> App <$> go a1 <*> go a2
+            Fail -> return Fail
             Fmap f a -> Fmap f <$> go a
             Rep g f b a -> Rep g f b <$> go a
             Void a -> Void <$> go a

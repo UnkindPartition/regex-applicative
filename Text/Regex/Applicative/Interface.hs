@@ -22,7 +22,7 @@ instance Applicative (RE s) where
 
 instance Alternative (RE s) where
     a1 <|> a2 = Alt a1 a2
-    empty = Eps
+    empty = Fail
     many a = reverse <$> Rep Greedy (flip (:)) [] a
     some a = (:) <$> a <*> many a
 
@@ -89,6 +89,7 @@ withMatched (App a b) =
     (\(f, s) (x, t) -> (f x, s ++ t)) <$>
         withMatched a <*>
         withMatched b
+withMatched Fail = Fail
 withMatched (Fmap f x) = (f *** id) <$> withMatched x
 withMatched (Rep gr f a0 x) =
     Rep gr (\(a, s) (x, t) -> (f a x, s ++ t)) (a0, []) (withMatched x)
