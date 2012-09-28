@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.2.1
+-----
+* Add the `withMatched` function
+* Make matching functions a bit more lax
+* Fix a bug in the `empty` method
+
 0.2
 ---
 * Infix matching functions
