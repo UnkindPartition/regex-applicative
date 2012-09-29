@@ -83,3 +83,15 @@ Library
                    -fno-warn-name-shadowing
                    -fno-warn-missing-signatures
                    -fno-warn-orphans
+
+Test-Suite test-regex-applicative
+  type:       exitcode-stdio-1.0
+  main-is:    test.hs
+  Build-depends:       base < 5,
+                       containers,
+                       transformers,
+                       smallcheck,
+                       HUnit,
+                       test-framework,
+                       test-framework-smallcheck,
+                       test-framework-hunit
