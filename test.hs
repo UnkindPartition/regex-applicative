@@ -165,6 +165,17 @@ tests =
                 (findShortestPrefix "bc" "abc")
                 Nothing
             ]
+        , testGroup "findShortestInfix"
+            [ u "t1"
+                (findShortestInfix ("a" <|> "ab") "tabc")
+                (Just ("t", "a","bc"))
+            , u "t2"
+                (findShortestInfix ("ab" <|> "a") "tabc")
+                (Just ("t", "a","bc"))
+            , u "t3"
+                (findShortestInfix "bc" "tabc")
+                (Just ("ta", "bc",""))
+            ]
         ]
     ]
     where
