@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, FlexibleInstances, MultiParamTypeClasses #-}
 import Text.Regex.Applicative
 import Text.Regex.Applicative.Reference
 import Control.Applicative
@@ -16,19 +16,16 @@ import Test.Framework.Providers.HUnit
 
 -- Small alphabets as SmallCheck's series
 newtype A = A { a :: Char } deriving Show
-instance Serial A where
+instance Monad m => Serial m A where
     series = cons0 $ A 'a'
-    coseries = error "No coseries, sorry"
 
 newtype AB = AB { ab :: Char } deriving Show
-instance Serial AB where
+instance Monad m => Serial m AB where
     series = cons0 (AB 'a') \/ cons0 (AB 'b')
-    coseries = error "No coseries, sorry"
 
 newtype ABC = ABC { abc :: Char } deriving Show
-instance Serial ABC where
+instance Monad m => Serial m ABC where
     series = cons0 (ABC 'a') \/ cons0 (ABC 'b') \/ cons0 (ABC 'c')
-    coseries = error "No coseries, sorry"
 
 re1 =
     let one = pure 1 <* sym 'a'

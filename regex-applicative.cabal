@@ -90,7 +90,7 @@ Test-Suite test-regex-applicative
   Build-depends:       base < 5,
                        containers,
                        transformers,
-                       smallcheck,
+                       smallcheck >= 1.0,
                        HUnit,
                        test-framework,
                        test-framework-smallcheck,
