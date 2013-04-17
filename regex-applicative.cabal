@@ -59,6 +59,7 @@ Source-repository this
   tag:      v0.2.1
 
 Library
+  Default-language:    Haskell2010
   -- Packages needed in order to build this package.
   Build-depends:       base < 5,
                        containers,
@@ -88,6 +89,7 @@ Library
 Test-Suite test-regex-applicative
   type:       exitcode-stdio-1.0
   main-is:    test.hs
+  Default-language:    Haskell2010
   Build-depends:       base < 5,
                        containers,
                        transformers,
