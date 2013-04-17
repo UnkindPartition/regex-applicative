@@ -14,7 +14,7 @@ import Data.Char
 import Text.Regex.Applicative
 
 
--- | Decimal digit, i.e. @\'0\'..\'9\'@
+-- | Decimal digit, i.e. @\'0\'@..@\'9\'@
 digit :: Num a => RE Char a
 digit = fromIntegral . digitToInt <$> psym isDigit
 
