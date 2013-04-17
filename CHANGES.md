@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.3
+---
+* Add a new module, `Text.Regex.Applicative.Common`, which contains some
+  commonly used regexps (by Aleksey Khudyakov)
+* Improve the test suite
+
 0.2.1
 -----
 * Add the `withMatched` function
