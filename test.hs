@@ -10,9 +10,9 @@ import Text.Printf
 import Test.HUnit
 import Test.SmallCheck
 import Test.SmallCheck.Series
-import Test.Framework
-import Test.Framework.Providers.SmallCheck
-import Test.Framework.Providers.HUnit
+import Test.Tasty
+import Test.Tasty.SmallCheck
+import Test.Tasty.HUnit
 
 -- Small alphabets as SmallCheck's series
 newtype A = A { a :: Char } deriving Show
@@ -85,7 +85,7 @@ testRecognitionAgainstParsing re f s =
     let fs = map f s in
     isJust (fs =~ re) == isJust (fs =~ (re *> pure ()))
 
-tests =
+tests = testGroup "Tests"
     [ testGroup "Engine tests"
        [ t "re1" 10 $ prop re1 a
        , t "re2" 10 $ prop re2 ab
@@ -176,7 +176,7 @@ tests =
         ]
     ]
     where
-    t name n = withDepth n . testProperty name
+    t name n = localOption (SmallCheckDepth n) . testProperty name
     u name real ideal = testCase name (assertEqual "" real ideal)
 
 main = defaultMain tests
