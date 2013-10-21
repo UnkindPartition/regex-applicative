@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.3.0.1
+-------
+
+Port the test suite to tasty
+
 0.3
 ---
 * Add a new module, `Text.Regex.Applicative.Common`, which contains some
