@@ -7,7 +7,9 @@
 -- Maintainer: Roman Cheplyaka <roma@ro-che.info>
 -- Stability : experimental
 --
--- Reference implementation (using backtracking)
+-- Reference implementation (using backtracking).
+--
+-- This is exposed for testing purposes only!
 --------------------------------------------------------------------
 
 {-# LANGUAGE GADTs #-}
