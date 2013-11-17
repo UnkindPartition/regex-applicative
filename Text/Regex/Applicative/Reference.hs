@@ -60,6 +60,7 @@ re2monad r =
             rep b = combine (do a <- am; rep $ f b a) (return b)
             combine a b = case g of Greedy -> a <|> b; NonGreedy -> b <|> a
         Void a -> re2monad a >> return ()
+        Fail -> empty
 
 runP :: P s a -> [s] -> Maybe a
 runP m s = case filter (null . snd) $ unP m s of
