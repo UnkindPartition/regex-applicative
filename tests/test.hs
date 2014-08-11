@@ -7,7 +7,6 @@ import Data.Traversable
 import Data.Maybe
 import Text.Printf
 
-import Test.HUnit
 import Test.SmallCheck
 import Test.SmallCheck.Series
 import Test.Tasty

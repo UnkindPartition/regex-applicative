@@ -99,7 +99,6 @@ Test-Suite test-regex-applicative
                        containers,
                        transformers,
                        smallcheck >= 1.0,
-                       HUnit,
                        tasty,
                        tasty-smallcheck,
                        tasty-hunit,
