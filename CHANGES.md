@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.3.0.3
+-------
+
+* Fix the test suite
+* Fix build with GHC 7.9
+
 0.3.0.2
 -------
 
