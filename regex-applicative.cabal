@@ -60,6 +60,9 @@ Source-repository this
 
 Library
   Default-language:    Haskell2010
+
+  Default-extensions:  LambdaCase
+
   -- Packages needed in order to build this package.
   Build-depends:       base < 5,
                        containers,

@@ -52,7 +52,7 @@ compile2 e =
         App n1 n2 ->
             let a1 = compile2 n1
                 a2 = compile2 n2
-            in \k -> case k of
+            in \case
                 SingleCont k -> a1 $ SingleCont $ \a1_value -> a2 $ SingleCont $ k . a1_value
                 EmptyNonEmpty ke kn ->
                     a1 $ EmptyNonEmpty
