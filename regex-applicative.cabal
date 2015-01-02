@@ -1,5 +1,5 @@
 Name:                regex-applicative
-Version:             0.3.0.3
+Version:             0.3.1
 Synopsis:            Regex-based parsing with applicative interface
 Description:         
     regex-applicative is a Haskell library for parsing using regular expressions.
