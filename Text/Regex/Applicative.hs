@@ -20,6 +20,7 @@ module Text.Regex.Applicative
     , reFoldl
     , Greediness(..)
     , few
+    , comap
     , withMatched
     , match
     , (=~)

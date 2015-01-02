@@ -29,6 +29,21 @@ instance Alternative (RE s) where
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string
 
+-- | 'RE' is a profunctor. This is its contravariant map.
+--
+-- (A dependency on the @profunctors@ package doesn't seem justified.)
+comap :: (s2 -> s1) -> RE s1 a -> RE s2 a
+comap f re =
+  case re of
+    Eps -> Eps
+    Symbol t p    -> Fmap f $ Symbol t (p . f)
+    Alt r1 r2     -> Alt (comap f r1) (comap f r2)
+    App r1 r2     -> App (comap f r1) (comap f r2)
+    Fmap g r      -> Fmap g (comap f r)
+    Fail          -> Fail
+    Rep gr fn a r -> Rep gr fn a (comap f r)
+    Void r        -> Void (comap f r)
+
 -- | Match and return a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
 psym p = Symbol (error "Not numbered symbol") p
