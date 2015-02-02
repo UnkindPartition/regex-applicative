@@ -13,6 +13,8 @@ import Test.Tasty
 import Test.Tasty.SmallCheck
 import Test.Tasty.HUnit
 
+import StateQueue
+
 -- Small alphabets as SmallCheck's series
 newtype A = A { a :: Char } deriving Show
 instance Monad m => Serial m A where
@@ -173,6 +175,7 @@ tests = testGroup "Tests"
                 (Just ("ta", "bc",""))
             ]
         ]
+    , stateQueueTests
     ]
     where
     t name n = localOption (SmallCheckDepth n) . testProperty name
