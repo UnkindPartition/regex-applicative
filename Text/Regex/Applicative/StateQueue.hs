@@ -1,3 +1,5 @@
+-- | This internal module is exposed only for testing and benchmarking. You
+-- don't need to import it.
 module Text.Regex.Applicative.StateQueue
     ( StateQueue
     , empty
@@ -11,15 +13,20 @@ import Prelude hiding (read, lookup, replicate)
 import qualified Data.IntSet as IntSet
 import Data.List (foldl')
 
+-- | 'StateQueue' is a data structure that can efficiently insert elements
+-- (preserving their order)
+-- and check whether an element with the given 'Int' key is already in the queue.
 data StateQueue a = StateQueue
     { elements :: [a]
     , ids :: !IntSet.IntSet
     }
 
+-- | Get the list of all elements
 getElements :: StateQueue a -> [a]
 getElements = reverse . elements
 
 {-# INLINE empty #-}
+-- | The empty state queue
 empty :: StateQueue a
 empty = StateQueue
     { elements = []
@@ -27,8 +34,9 @@ empty = StateQueue
     }
 
 {-# INLINE insert #-}
+-- | Insert an element in the state queue, unless there is already an element with the same key
 insertUnique
-    :: Int
+    :: Int -- ^ key
     -> a
     -> StateQueue a
     -> StateQueue a
@@ -39,6 +47,7 @@ insertUnique i v sq@StateQueue { ids = ids, elements = elements } =
                 , ids = IntSet.insert i ids
                 }
 
+-- | Insert an element in the state queue
 insert
     :: a
     -> StateQueue a
@@ -47,5 +56,6 @@ insert v sq =
     sq { elements = v : elements sq }
 
 {-# INLINE fold #-}
+-- | Fold over the elements of the state queue
 fold :: (a -> x -> a) -> a -> StateQueue x -> a
 fold f acc0 sq = foldl' f acc0 (reverse $ elements sq)

@@ -27,10 +27,10 @@ Library
                        Text.Regex.Applicative.Object
                        Text.Regex.Applicative.Common
                        Text.Regex.Applicative.Reference
+                       Text.Regex.Applicative.StateQueue
   Other-modules:       Text.Regex.Applicative.Interface
                        Text.Regex.Applicative.Types
                        Text.Regex.Applicative.Compile
-                       Text.Regex.Applicative.StateQueue
   GHC-Options:     -O2
                    -Wall
                    -fno-warn-name-shadowing
