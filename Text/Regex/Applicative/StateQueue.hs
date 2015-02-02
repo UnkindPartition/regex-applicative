@@ -48,7 +48,9 @@ insertUnique i v sq@StateQueue { ids = ids, elements = elements } =
                 , ids = IntSet.insert i ids
                 }
 
--- | Insert an element in the state queue
+-- | Insert an element in the state queue without a key.
+--
+-- Since 'insert' doesn't take a key, it won't affect any 'insertUnique'.
 insert
     :: a
     -> StateQueue a
