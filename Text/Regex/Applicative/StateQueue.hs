@@ -20,6 +20,7 @@ data StateQueue a = StateQueue
     { elements :: [a]
     , ids :: !IntSet.IntSet
     }
+    deriving Show
 
 -- | Get the list of all elements
 getElements :: StateQueue a -> [a]
