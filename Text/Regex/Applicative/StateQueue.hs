@@ -5,13 +5,12 @@ module Text.Regex.Applicative.StateQueue
     , empty
     , insert
     , insertUnique
-    , fold
     , getElements
     ) where
 
 import Prelude hiding (read, lookup, replicate)
 import qualified Data.IntSet as IntSet
-import Data.List (foldl')
+import Data.Foldable as F
 
 -- | 'StateQueue' is a data structure that can efficiently insert elements
 -- (preserving their order)
@@ -21,6 +20,9 @@ data StateQueue a = StateQueue
     , ids :: !IntSet.IntSet
     }
     deriving (Eq,Show)
+
+instance Foldable StateQueue where
+  foldr f a = F.foldr f a . getElements
 
 -- | Get the list of all elements
 getElements :: StateQueue a -> [a]
@@ -57,8 +59,3 @@ insert
     -> StateQueue a
 insert v sq =
     sq { elements = v : elements sq }
-
-{-# INLINE fold #-}
--- | Fold over the elements of the state queue
-fold :: (a -> x -> a) -> a -> StateQueue x -> a
-fold f acc0 sq = foldl' f acc0 (reverse $ elements sq)

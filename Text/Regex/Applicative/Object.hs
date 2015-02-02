@@ -32,7 +32,7 @@ import Text.Regex.Applicative.Types
 import qualified Text.Regex.Applicative.StateQueue as SQ
 import qualified Text.Regex.Applicative.Compile as Compile
 import Data.Maybe
-import Data.List
+import Data.Foldable as F
 import Control.Monad.Trans.State
 import Control.Applicative hiding (empty)
 
@@ -45,13 +45,13 @@ newtype ReObject s r = ReObject (SQ.StateQueue (Thread s r))
 
 -- | List of all threads of an object. Each non-result thread has a unique id.
 threads :: ReObject s r -> [Thread s r]
-threads (ReObject sq) = SQ.getElements sq
+threads (ReObject sq) = F.toList sq
 
 -- | Create an object from a list of threads. It is recommended that all
 -- threads come from the same 'ReObject', unless you know what you're doing.
 -- However, it should be safe to filter out or rearrange threads.
 fromThreads :: [Thread s r] -> ReObject s r
-fromThreads ts = foldl' (flip addThread) emptyObject ts
+fromThreads ts = F.foldl' (flip addThread) emptyObject ts
 
 -- | Check whether a thread is a result thread
 isResult :: Thread s r -> Bool
@@ -85,8 +85,8 @@ step s (ReObject sq) =
             case t of
                 Accept {} -> q
                 Thread _ c ->
-                    foldl' (\q x -> addThread x q) q $ c s
-        newQueue = SQ.fold accum emptyObject sq
+                    F.foldl' (\q x -> addThread x q) q $ c s
+        newQueue = F.foldl' accum emptyObject sq
     in newQueue
 
 -- | Feed a symbol into a non-result thread. It is an error to call 'stepThread'
