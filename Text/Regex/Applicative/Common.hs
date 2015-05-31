@@ -11,6 +11,7 @@ module Text.Regex.Applicative.Common (
   ) where
 
 import Data.Char
+import Data.List (foldl')
 import Text.Regex.Applicative
 
 
@@ -33,8 +34,8 @@ signed p = sign <*> p
 
 -- | Parse decimal number without sign.
 decimal :: Num a => RE Char a
-decimal = foldl (\d i -> d*10 + i) 0 <$> some digit
+decimal = foldl' (\d i -> d*10 + i) 0 <$> some digit
 
 -- | Parse decimal number without sign.
 hexadecimal :: Num a => RE Char a
-hexadecimal = foldl (\d i -> d*16 + i) 0 <$> some hexDigit
+hexadecimal = foldl' (\d i -> d*16 + i) 0 <$> some hexDigit
