@@ -15,6 +15,7 @@ module Text.Regex.Applicative
     ( RE
     , sym
     , psym
+    , msym
     , anySym
     , string
     , reFoldl

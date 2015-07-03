@@ -52,7 +52,9 @@ re2monad r =
         Eps -> return $ error "eps"
         Symbol _ p -> do
             c <- getChar
-            if p c then return c else empty
+            case p c of
+              Just r -> return r
+              Nothing -> empty
         Alt a1 a2 -> re2monad a1 <|> re2monad a2
         App a1 a2 -> re2monad a1 <*> re2monad a2
         Fmap f a -> fmap f $ re2monad a

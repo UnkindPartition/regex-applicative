@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, GADTs #-}
+{-# LANGUAGE TypeFamilies, GADTs, TupleSections #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
@@ -36,7 +36,7 @@ comap :: (s2 -> s1) -> RE s1 a -> RE s2 a
 comap f re =
   case re of
     Eps -> Eps
-    Symbol t p    -> Fmap f $ Symbol t (p . f)
+    Symbol t p    -> Symbol t (p . f)
     Alt r1 r2     -> Alt (comap f r1) (comap f r2)
     App r1 r2     -> App (comap f r1) (comap f r2)
     Fmap g r      -> Fmap g (comap f r)
@@ -46,7 +46,12 @@ comap f re =
 
 -- | Match and return a single symbol which satisfies the predicate
 psym :: (s -> Bool) -> RE s s
-psym p = Symbol (error "Not numbered symbol") p
+psym p = msym (\s -> if p s then Just s else Nothing)
+
+-- | Like 'psym', but allows to return a computed value instead of the
+-- original symbol
+msym :: (s -> Maybe a) -> RE s a
+msym p = Symbol (error "Not numbered symbol") p
 
 -- | Match and return the given symbol
 sym :: Eq s => s -> RE s s
@@ -54,7 +59,7 @@ sym s = psym (s ==)
 
 -- | Match and return any single symbol
 anySym :: RE s s
-anySym = psym (const True)
+anySym = msym Just
 
 -- | Match and return the given sequence of symbols.
 --
@@ -98,7 +103,7 @@ few a = reverse <$> Rep NonGreedy (flip (:)) [] a
 -- | Return matched symbols as part of the return value
 withMatched :: RE s a -> RE s (a, [s])
 withMatched Eps = flip (,) [] <$> Eps
-withMatched x@(Symbol _ _) = (id &&& pure) <$> x
+withMatched (Symbol t p) = Symbol t (\s -> (,[s]) <$> p s)
 withMatched (Alt a b) = withMatched a <|> withMatched b
 withMatched (App a b) =
     (\(f, s) (x, t) -> (f x, s ++ t)) <$>

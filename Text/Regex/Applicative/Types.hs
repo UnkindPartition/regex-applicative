@@ -57,7 +57,7 @@ data Greediness = Greedy | NonGreedy
 -- and returns the list of @ra@'s return values on those strings.
 data RE s a where
     Eps :: RE s ()
-    Symbol :: ThreadId -> (s -> Bool) -> RE s s
+    Symbol :: ThreadId -> (s -> Maybe a) -> RE s a
     Alt :: RE s a -> RE s a -> RE s a
     App :: RE s (a -> b) -> RE s a -> RE s b
     Fmap :: (a -> b) -> RE s a -> RE s b

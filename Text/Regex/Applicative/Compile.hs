@@ -48,7 +48,9 @@ compile2 e =
         Symbol i p -> \k -> [t $ nonEmptyCont k] where
           -- t :: (a -> [Thread s r]) -> Thread s r
           t k = Thread i $ \s ->
-            if p s then k s else []
+            case p s of
+              Just r -> k r
+              Nothing -> []
         App n1 n2 ->
             let a1 = compile2 n1
                 a2 = compile2 n2
@@ -95,7 +97,7 @@ mkNFA e =
         Eps -> return k
         Symbol i@(ThreadId n) p -> do
             modify $ IntMap.insert n $
-                (p, k)
+                (isJust . p, k)
             return [STransition i]
         App n1 n2 -> go n1 =<< go n2 k
         Alt n1 n2 -> (++) <$> go n1 k <*> go n2 k
