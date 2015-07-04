@@ -43,6 +43,8 @@ Test-Suite test-regex-applicative
     tests
   main-is:
     test.hs
+  other-modules:
+    StateQueue
   GHC-Options: -threaded
   Default-language:    Haskell2010
   Build-depends:       base < 5,
