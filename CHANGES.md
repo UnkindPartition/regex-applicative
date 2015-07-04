@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.3.2.1
+-------
+
+* Use strict left fold in decimal/hexadecimal
+* Include a missing test module in the sdist tarball
+
 0.3.2
 -----
 
