@@ -29,6 +29,7 @@ Library
                        Text.Regex.Applicative.Common
                        Text.Regex.Applicative.Reference
                        Text.Regex.Applicative.StateQueue
+                       Text.Regex.Applicative.ListLike
   Other-modules:       Text.Regex.Applicative.Interface
                        Text.Regex.Applicative.Types
                        Text.Regex.Applicative.Compile

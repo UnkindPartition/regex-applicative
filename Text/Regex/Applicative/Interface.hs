@@ -9,30 +9,37 @@ import Data.String
 import Data.Maybe
 import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Object
+import Prelude hiding (foldl, null, head, tail)
+import Data.ListLike (FoldableLL, foldl, ListLike, null, head, tail, fromList)
 
-instance Functor (RE s) where
+instance Functor (RE l s) where
     fmap f x = Fmap f x
     f <$ x = pure f <* x
 
-instance Applicative (RE s) where
+instance Applicative (RE l s) where
     pure x = const x <$> Eps
     a1 <*> a2 = App a1 a2
     a *> b = pure (const id) <*> Void a <*> b
     a <* b = pure const <*> a <*> Void b
 
-instance Alternative (RE s) where
+instance Alternative (RE k s) where
     a1 <|> a2 = Alt a1 a2
     empty = Fail
     many a = reverse <$> Rep Greedy (flip (:)) [] a
     some a = (:) <$> a <*> many a
 
-instance (char ~ Char, string ~ String) => IsString (RE char string) where
+instance (char ~ Char, string ~ String) => IsString (RE l char string) where
     fromString = string
+
+uncons :: ListLike l s => l -> Maybe (s, l)
+uncons l | null l    = Nothing
+         | otherwise = Just (head l, tail l)
+{-# INLINE uncons #-}
 
 -- | 'RE' is a profunctor. This is its contravariant map.
 --
 -- (A dependency on the @profunctors@ package doesn't seem justified.)
-comap :: (s2 -> s1) -> RE s1 a -> RE s2 a
+comap :: (s2 -> s1) -> RE l s1 a -> RE l s2 a
 comap f re =
   case re of
     Eps -> Eps
@@ -45,20 +52,20 @@ comap f re =
     Void r        -> Void (comap f r)
 
 -- | Match and return a single symbol which satisfies the predicate
-psym :: (s -> Bool) -> RE s s
+psym :: (s -> Bool) -> RE l s s
 psym p = msym (\s -> if p s then Just s else Nothing)
 
 -- | Like 'psym', but allows to return a computed value instead of the
 -- original symbol
-msym :: (s -> Maybe a) -> RE s a
+msym :: (s -> Maybe a) -> RE l s a
 msym p = Symbol (error "Not numbered symbol") p
 
 -- | Match and return the given symbol
-sym :: Eq s => s -> RE s s
+sym :: Eq s => s -> RE l s s
 sym s = psym (s ==)
 
 -- | Match and return any single symbol
-anySym :: RE s s
+anySym :: RE l s s
 anySym = msym Just
 
 -- | Match and return the given sequence of symbols.
@@ -75,7 +82,7 @@ anySym = msym Just
 -- >number = "one" *> pure 1  <|>  "two" *> pure 2
 -- >
 -- >main = print $ "two" =~ number
-string :: Eq a => [a] -> RE a [a]
+string :: Eq a => [a] -> RE l a [a]
 string = traverse sym
 
 -- | Match zero or more instances of the given expression, which are combined using
@@ -84,7 +91,7 @@ string = traverse sym
 -- 'Greediness' argument controls whether this regular expression should match
 -- as many as possible ('Greedy') or as few as possible ('NonGreedy') instances
 -- of the underlying expression.
-reFoldl :: Greediness -> (b -> a -> b) -> b -> RE s a -> RE s b
+reFoldl :: Greediness -> (b -> a -> b) -> b -> RE l s a -> RE l s b
 reFoldl g f b a = Rep g f b a
 
 -- | Match zero or more instances of the given expression, but as
@@ -97,11 +104,11 @@ reFoldl g f b a = Rep g f b a
 -- >Just ("a","abab")
 -- >Text.Regex.Applicative> findFirstPrefix (many anySym  <* "b") "ababab"
 -- >Just ("ababa","")
-few :: RE s a -> RE s [a]
+few :: RE l s a -> RE l s [a]
 few a = reverse <$> Rep NonGreedy (flip (:)) [] a
 
 -- | Return matched symbols as part of the return value
-withMatched :: RE s a -> RE s (a, [s])
+withMatched :: RE l s a -> RE l s (a, [s])
 withMatched Eps = flip (,) [] <$> Eps
 withMatched (Symbol t p) = Symbol t (\s -> (,[s]) <$> p s)
 withMatched (Alt a b) = withMatched a <|> withMatched b
@@ -117,9 +124,11 @@ withMatched (Rep gr f a0 x) =
 withMatched (Void x) = (const () *** id) <$> withMatched x
 
 -- | @s =~ a = match a s@
-(=~) :: [s] -> RE s a -> Maybe a
+(=~) :: FoldableLL l s => l -> RE l s a -> Maybe a
 (=~) = flip match
 infix 2 =~
+{- SPECIALIZE (=~) :: [s] -> RE [s] s a -> Maybe a -}
+
 
 -- | Attempt to match a string of symbols against the regular expression.
 -- Note that the whole string (not just some part of it) should be matched.
@@ -131,11 +140,12 @@ infix 2 =~
 -- >Text.Regex.Applicative> match (sym 'a' <|> sym 'b') "ab"
 -- >Nothing
 --
-match :: RE s a -> [s] -> Maybe a
+match :: FoldableLL l s => RE l s a -> l -> Maybe a
 match re = let obj = compile re in \str ->
     listToMaybe $
     results $
     foldl (flip step) obj str
+{- SPECIALIZE match RE [s] s a -> [s] -> Maybe a -}
 
 -- | Find a string prefix which is matched by the regular expression.
 --
@@ -155,7 +165,7 @@ match re = let obj = compile re in \str ->
 -- >Just ("ab","c")
 -- >Text.Regex.Applicative> findFirstPrefix "bc" "abc"
 -- >Nothing
-findFirstPrefix :: RE s a -> [s] -> Maybe (a, [s])
+findFirstPrefix :: ListLike l s => RE l s a -> l -> Maybe (a, l)
 findFirstPrefix re str = go (compile re) str Nothing
     where
     walk obj [] = (obj, Nothing)
@@ -169,10 +179,11 @@ findFirstPrefix re str = go (compile re) str Nothing
             (obj', resThis) ->
                 let res = ((flip (,) str) <$> resThis) <|> resOld
                 in
-                    case str of
+                    case uncons str of
                         _ | failed obj' -> res
-                        [] -> res
-                        (s:ss) -> go (step s obj') ss res
+                        Nothing -> res
+                        Just (s, ss) -> go (step s obj') ss res
+{-# SPECIALIZE findFirstPrefix :: RE [s] s a -> [s] -> Maybe (a, [s]) #-}
 
 -- | Find the longest string prefix which is matched by the regular expression.
 --
@@ -190,19 +201,20 @@ findFirstPrefix re str = go (compile re) str Nothing
 -- >Just (Left "if"," foo")
 -- >Text.Regex.Applicative Data.Char> findLongestPrefix lexeme "iffoo"
 -- >Just (Right "iffoo","")
-findLongestPrefix :: RE s a -> [s] -> Maybe (a, [s])
+findLongestPrefix :: ListLike l s => RE l s a -> l -> Maybe (a, l)
 findLongestPrefix re str = go (compile re) str Nothing
     where
     go obj str resOld =
         let res = (fmap (flip (,) str) $ listToMaybe $ results obj) <|> resOld
         in
-            case str of
+            case uncons str of
                 _ | failed obj -> res
-                [] -> res
-                (s:ss) -> go (step s obj) ss res
+                Nothing -> res
+                Just (s, ss) -> go (step s obj) ss res
+{-# SPECIALIZE findLongestPrefix :: RE [s] s a -> [s] -> Maybe (a, [s]) #-}
 
 -- | Find the shortest prefix (analogous to 'findLongestPrefix')
-findShortestPrefix :: RE s a -> [s] -> Maybe (a, [s])
+findShortestPrefix :: ListLike l s => RE l s a -> l -> Maybe (a, l)
 findShortestPrefix re str = go (compile re) str
     where
     go obj str =
@@ -210,37 +222,39 @@ findShortestPrefix re str = go (compile re) str
             r : _ -> Just (r, str)
             _ | failed obj -> Nothing
             _ ->
-                case str of
-                    [] -> Nothing
-                    s:ss -> go (step s obj) ss
+                case uncons str of
+                    Nothing -> Nothing
+                    Just (s, ss) -> go (step s obj) ss
+{-# SPECIALIZE findShortestPrefix :: RE [s] s a -> [s] -> Maybe (a, [s]) #-}
 
 -- | Find the leftmost substring that is matched by the regular expression.
 -- Otherwise behaves like 'findFirstPrefix'. Returns the result together with
 -- the prefix and suffix of the string surrounding the match.
-findFirstInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
+findFirstInfix :: ListLike l s => RE l s a -> l -> Maybe (l, a, l)
 findFirstInfix re str =
-    fmap (\((first, res), last) -> (first, res, last)) $
+    fmap (\((first, res), last) -> (fromList first, res, last)) $
     findFirstPrefix ((,) <$> few anySym <*> re) str
+{-# SPECIALIZE findFirstInfix :: RE [s] s a -> [s] -> Maybe ([s], a, [s]) #-}
 
 -- Auxiliary function for findExtremeInfix
-prefixCounter :: RE s (Int, [s])
-prefixCounter = second reverse <$> reFoldl NonGreedy f (0, []) anySym
+prefixCounter :: ListLike l s => RE l s (Int, l)
+prefixCounter = second (fromList . reverse) <$> reFoldl NonGreedy f (0, []) anySym
     where
     f (i, prefix) s = ((,) $! (i+1)) $ s:prefix
 
-data InfixMatchingState s a = GotResult
+data InfixMatchingState l s a = GotResult
     { prefixLen  :: !Int
-    , prefixStr  :: [s]
+    , prefixStr  :: l
     , result     :: a
-    , postfixStr :: [s]
+    , postfixStr :: l
     }
     | NoResult
 
 -- a `preferOver` b chooses one of a and b, giving preference to a
 preferOver
-    :: InfixMatchingState s a
-    -> InfixMatchingState s a
-    -> InfixMatchingState s a
+    :: InfixMatchingState l s a
+    -> InfixMatchingState l s a
+    -> InfixMatchingState l s a
 preferOver NoResult b = b
 preferOver b NoResult = b
 preferOver a b =
@@ -249,9 +263,9 @@ preferOver a b =
         _  -> a -- otherwise, prefer a
 
 mkInfixMatchingState
-    :: [s] -- rest of input
-    -> Thread s ((Int, [s]), a)
-    -> InfixMatchingState s a
+    :: l -- rest of input
+    -> Thread s ((Int, l), a)
+    -> InfixMatchingState l s a
 mkInfixMatchingState rest thread =
     case getResult thread of
         Just ((pLen, pStr), res) ->
@@ -263,7 +277,7 @@ mkInfixMatchingState rest thread =
                 }
         Nothing -> NoResult
 
-gotResult :: InfixMatchingState s a -> Bool
+gotResult :: InfixMatchingState l s a -> Bool
 gotResult GotResult {} = True
 gotResult _ = False
 
@@ -279,12 +293,12 @@ gotResult _ = False
 -- 3.3. If they are produced on the different steps, choose the later one (since
 -- they have the same prefixes, later means longer)
 findExtremalInfix
-    :: -- function to combine a later result (first arg) to an earlier one (second
-       -- arg)
-       (InfixMatchingState s a -> InfixMatchingState s a -> InfixMatchingState s a)
-    -> RE s a
-    -> [s]
-    -> Maybe ([s], a, [s])
+    :: ListLike l s
+     -- function to combine a later result (first arg) to an earlier one (second arg)
+    => (InfixMatchingState l s a -> InfixMatchingState l s a -> InfixMatchingState l s a)
+    -> RE l s a
+    -> l
+    -> Maybe (l, a, l)
 findExtremalInfix newOrOld re str =
     case go (compile $ (,) <$> prefixCounter <*> re) str NoResult of
         NoResult -> Nothing
@@ -292,8 +306,8 @@ findExtremalInfix newOrOld re str =
             Just (prefixStr r, result r, postfixStr r)
     where
     {-
-    go :: ReObject s ((Int, [s]), a)
-       -> [s]
+    go :: ReObject s ((Int, l), a)
+       -> l
        -> InfixMatchingState s a
        -> InfixMatchingState s a
     -}
@@ -311,20 +325,22 @@ findExtremalInfix newOrOld re str =
                     then fromThreads $ init $ threads obj
                     else obj
         in
-            case str of
-                [] -> res
+            case uncons str of
+                Nothing -> res
                 _ | failed obj -> res
-                (s:ss) -> go (step s obj') ss res
+                Just (s, ss) -> go (step s obj') ss res
 
 
 -- | Find the leftmost substring that is matched by the regular expression.
 -- Otherwise behaves like 'findLongestPrefix'. Returns the result together with
 -- the prefix and suffix of the string surrounding the match.
-findLongestInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
+findLongestInfix :: ListLike l s => RE l s a -> l -> Maybe (l, a, l)
 findLongestInfix = findExtremalInfix preferOver
+{-# SPECIALIZE findLongestInfix :: RE [s] s a -> [s] -> Maybe ([s], a, [s]) #-}
 
 -- | Find the leftmost substring that is matched by the regular expression.
 -- Otherwise behaves like 'findShortestPrefix'. Returns the result together with
 -- the prefix and suffix of the string surrounding the match.
-findShortestInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
+findShortestInfix :: ListLike l s => RE l s a -> l -> Maybe (l, a, l)
 findShortestInfix = findExtremalInfix $ flip preferOver
+{-# SPECIALIZE findShortestInfix :: RE [s] s a -> [s] -> Maybe ([s], a, [s]) #-}

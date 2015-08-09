@@ -55,17 +55,17 @@ data Greediness = Greedy | NonGreedy
 --
 -- * 'some' @ra@ matches concatenation of one or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
-data RE s a where
-    Eps :: RE s ()
-    Symbol :: ThreadId -> (s -> Maybe a) -> RE s a
-    Alt :: RE s a -> RE s a -> RE s a
-    App :: RE s (a -> b) -> RE s a -> RE s b
-    Fmap :: (a -> b) -> RE s a -> RE s b
-    Fail :: RE s a
+data RE l s a where
+    Eps :: RE l s ()
+    Symbol :: ThreadId -> (s -> Maybe a) -> RE l s a
+    Alt :: RE l s a -> RE l s a -> RE l s a
+    App :: RE l s (a -> b) -> RE l s a -> RE l s b
+    Fmap :: (a -> b) -> RE l s a -> RE l s b
+    Fail :: RE l s a
     Rep :: Greediness    -- repetition may be greedy or not
         -> (b -> a -> b) -- folding function (like in foldl)
         -> b             -- the value for zero matches, and also the initial value
                          -- for the folding function
-        -> RE s a
-        -> RE s b
-    Void :: RE s a -> RE s ()
+        -> RE l s a
+        -> RE l s b
+    Void :: RE l s a -> RE l s ()
