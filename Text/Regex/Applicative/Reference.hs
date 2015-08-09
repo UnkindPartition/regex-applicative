@@ -14,39 +14,40 @@
 
 {-# LANGUAGE GADTs #-}
 module Text.Regex.Applicative.Reference (reference) where
-import Prelude hiding (getChar)
+import Prelude hiding (getChar, null, head, tail)
 import Text.Regex.Applicative.Types
 import Control.Applicative
 import Control.Monad
+import Data.ListLike (ListLike, null, head, tail)
 
 
 -- A simple parsing monad
-newtype P s a = P { unP :: [s] -> [(a, [s])] }
+newtype P l s a = P { unP :: l -> [(a, l)] }
 
-instance Monad (P s) where
+instance Monad (P l s) where
     return x = P $ \s -> [(x, s)]
     (P a) >>= k = P $ \s ->
         a s >>= \(x,s) -> unP (k x) s
 
-instance Functor (P s) where
+instance Functor (P l s) where
     fmap = liftM
 
-instance Applicative (P s) where
+instance Applicative (P l s) where
     (<*>) = ap
     pure = return
 
-instance Alternative (P s) where
+instance Alternative (P l s) where
     empty = P $ const []
     P a1 <|> P a2 = P $ \s ->
         a1 s ++ a2 s
 
-getChar :: P s s
+getChar :: ListLike l s => P l s s
 getChar = P $ \s ->
-    case s of
-        [] -> []
-        c:cs -> [(c,cs)]
+  if null s
+     then []
+     else [(head s, tail s)]
 
-re2monad :: RE s a -> P s a
+re2monad :: ListLike l s => GenRE l s a -> P l s a
 re2monad r =
     case r of
         Eps -> return $ error "eps"
@@ -66,7 +67,7 @@ re2monad r =
         Void a -> re2monad a >> return ()
         Fail -> empty
 
-runP :: P s a -> [s] -> Maybe a
+runP :: ListLike l s => P l s a -> l -> Maybe a
 runP m s = case filter (null . snd) $ unP m s of
     (r, _) : _ -> Just r
     _ -> Nothing
@@ -75,5 +76,5 @@ runP m s = case filter (null . snd) $ unP m s of
 --
 -- However, this is not very efficient implementation and is supposed to be
 -- used for testing only.
-reference :: RE s a -> [s] -> Maybe a
+reference :: ListLike l s => GenRE l s a -> l -> Maybe a
 reference r s = runP (re2monad r) s

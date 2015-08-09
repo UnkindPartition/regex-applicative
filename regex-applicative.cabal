@@ -22,12 +22,15 @@ Library
   Default-language:    Haskell2010
   Build-depends:       base < 5,
                        containers,
-                       transformers
+                       transformers,
+                       text,
+                       ListLike >=4.2
   Exposed-modules:     Text.Regex.Applicative
                        Text.Regex.Applicative.Object
                        Text.Regex.Applicative.Common
                        Text.Regex.Applicative.Reference
                        Text.Regex.Applicative.StateQueue
+                       Text.Regex.Applicative.ListLike
   Other-modules:       Text.Regex.Applicative.Interface
                        Text.Regex.Applicative.Types
                        Text.Regex.Applicative.Compile
@@ -51,6 +54,8 @@ Test-Suite test-regex-applicative
                        containers,
                        transformers,
                        smallcheck >= 1.0,
+                       text,
+                       ListLike,
                        tasty,
                        tasty-smallcheck,
                        tasty-hunit,
