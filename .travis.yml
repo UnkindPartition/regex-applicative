@@ -1,0 +1,56 @@
+# NB: don't set `language: haskell` here
+
+sudo: false
+
+matrix:
+  include:
+    - env: CABALVER=1.18 GHCVER=7.8.4
+      addons:
+        apt:
+          sources:
+            - hvr-ghc
+          packages:
+            - cabal-install-1.18
+            - ghc-7.8.4
+    - env: CABALVER=1.22 GHCVER=7.10.1
+      addons:
+        apt:
+          sources:
+            - hvr-ghc
+          packages:
+            - cabal-install-1.22
+            - ghc-7.10.1
+
+
+# Note: the distinction between `before_install` and `install` is not
+#       important.
+before_install:
+ - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+ - cabal --version
+ - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+
+install:
+ - travis_retry cabal update
+ - cabal install --only-dependencies --enable-tests
+
+script:
+ # -v2 provides useful information for debugging
+ - cabal configure -v2 --enable-tests
+
+ # this builds all libraries and executables
+ # (including tests/benchmarks)
+ - cabal build
+ - cabal test
+
+ # tests that a source-distribution can be generated
+ - cabal sdist
+
+ # check that the generated source-distribution can be built & installed
+ - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
+   cd dist/;
+   if [ -f "$SRC_TGZ" ]; then
+      cabal install --force-reinstalls "$SRC_TGZ";
+   else
+      echo "expected '$SRC_TGZ' not found";
+      exit 1;
+   fi
