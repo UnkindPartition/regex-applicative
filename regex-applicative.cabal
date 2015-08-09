@@ -23,6 +23,7 @@ Library
   Build-depends:       base < 5,
                        containers,
                        transformers,
+                       text,
                        ListLike >=4.2
   Exposed-modules:     Text.Regex.Applicative
                        Text.Regex.Applicative.Object

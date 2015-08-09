@@ -47,7 +47,7 @@ getChar = P $ \s ->
      then []
      else [(head s, tail s)]
 
-re2monad :: ListLike l s => RE l s a -> P l s a
+re2monad :: ListLike l s => GenRE l s a -> P l s a
 re2monad r =
     case r of
         Eps -> return $ error "eps"
@@ -76,5 +76,5 @@ runP m s = case filter (null . snd) $ unP m s of
 --
 -- However, this is not very efficient implementation and is supposed to be
 -- used for testing only.
-reference :: ListLike l s => RE l s a -> l -> Maybe a
+reference :: ListLike l s => GenRE l s a -> l -> Maybe a
 reference r s = runP (re2monad r) s

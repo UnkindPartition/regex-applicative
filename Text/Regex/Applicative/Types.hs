@@ -6,7 +6,7 @@ import Control.Applicative
 -- The above import is needed for haddock to properly generate links to
 -- Applicative methods. But it's not actually used in the code, hence
 -- -fno-warn-unused-imports.
-
+import Data.Text (Text)
 
 newtype ThreadId = ThreadId Int
 
@@ -55,17 +55,23 @@ data Greediness = Greedy | NonGreedy
 --
 -- * 'some' @ra@ matches concatenation of one or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
-data RE l s a where
-    Eps :: RE l s ()
-    Symbol :: ThreadId -> (s -> Maybe a) -> RE l s a
-    Alt :: RE l s a -> RE l s a -> RE l s a
-    App :: RE l s (a -> b) -> RE l s a -> RE l s b
-    Fmap :: (a -> b) -> RE l s a -> RE l s b
-    Fail :: RE l s a
+data GenRE l s a where
+    Eps :: GenRE l s ()
+    Symbol :: ThreadId -> (s -> Maybe a) -> GenRE l s a
+    Alt :: GenRE l s a -> GenRE l s a -> GenRE l s a
+    App :: GenRE l s (a -> b) -> GenRE l s a -> GenRE l s b
+    Fmap :: (a -> b) -> GenRE l s a -> GenRE l s b
+    Fail :: GenRE l s a
     Rep :: Greediness    -- repetition may be greedy or not
         -> (b -> a -> b) -- folding function (like in foldl)
         -> b             -- the value for zero matches, and also the initial value
                          -- for the folding function
-        -> RE l s a
-        -> RE l s b
-    Void :: RE l s a -> RE l s ()
+        -> GenRE l s a
+        -> GenRE l s b
+    Void :: GenRE l s a -> GenRE l s ()
+
+-- | Regular expressions specialised to lists.
+type RE s a = GenRE [s] s a
+
+-- | Regular expressions specialised to 'Text'.
+type TRE a = GenRE Text Char a

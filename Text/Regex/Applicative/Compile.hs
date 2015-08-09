@@ -8,7 +8,7 @@ import Control.Applicative
 import Data.Maybe
 import qualified Data.IntMap as IntMap
 
-compile :: RE l s a -> (a -> [Thread s r]) -> [Thread s r]
+compile :: GenRE l s a -> (a -> [Thread s r]) -> [Thread s r]
 compile e k = compile2 e (SingleCont k)
 
 data Cont a = SingleCont !a | EmptyNonEmpty !a !a
@@ -41,7 +41,7 @@ nonEmptyCont k =
 --
 -- compile2 function takes two continuations: one when the match is empty and
 -- one when the match is non-empty. See the "Rep" case for the reason.
-compile2 :: RE l s a -> Cont (a -> [Thread s r]) -> [Thread s r]
+compile2 :: GenRE l s a -> Cont (a -> [Thread s r]) -> [Thread s r]
 compile2 e =
     case e of
         Eps -> \k -> emptyCont k ()
@@ -86,12 +86,12 @@ data FSMState
 
 type FSMMap s = IntMap.IntMap (s -> Bool, [FSMState])
 
-mkNFA :: RE l s a -> ([FSMState], (FSMMap s))
+mkNFA :: GenRE l s a -> ([FSMState], (FSMMap s))
 mkNFA e =
     flip runState IntMap.empty $
         go e [SAccept]
   where
-  go :: RE l s a -> [FSMState] -> State (FSMMap s) [FSMState]
+  go :: GenRE l s a -> [FSMState] -> State (FSMMap s) [FSMState]
   go e k =
     case e of
         Eps -> return k
@@ -112,13 +112,13 @@ mkNFA e =
             go n cont >> return cont
         Void n -> go n k
 
-  findEntries :: RE l s a -> [FSMState]
+  findEntries :: GenRE l s a -> [FSMState]
   findEntries e =
     -- A simple (although a bit inefficient) way to find all entry points is
     -- just to use 'go'
     evalState (go e []) IntMap.empty
 
-compile2_ :: RE l s a -> Cont [Thread s r] -> [Thread s r]
+compile2_ :: GenRE l s a -> Cont [Thread s r] -> [Thread s r]
 compile2_ e =
     let (entries, fsmap) = mkNFA e
         mkThread _ k1 (STransition i@(ThreadId n)) =

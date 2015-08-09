@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Module    : Text.Regex.Applicative
+-- Module    : Text.Regex.Applicative.ListLike
 -- Copyright : (c) Roman Cheplyaka
 -- License   : MIT
 --
@@ -11,7 +11,8 @@
 -- <https://github.com/feuerbach/regex-applicative/wiki/Examples>
 --------------------------------------------------------------------
 module Text.Regex.Applicative.ListLike
-    ( RE
+    ( GenRE
+    , TRE
     , sym
     , psym
     , msym

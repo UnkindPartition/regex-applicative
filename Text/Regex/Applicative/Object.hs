@@ -109,16 +109,16 @@ addThread t (ReObject q) =
         Thread { threadId_ = ThreadId i } -> ReObject $ SQ.insertUnique i t q
 
 -- | Compile a regular expression into a regular expression object
-compile :: RE l s r -> ReObject s r
+compile :: GenRE l s r -> ReObject s r
 compile =
     fromThreads .
     flip Compile.compile (\x -> [Accept x]) .
     renumber
 
-renumber :: RE l s a -> RE l s a
+renumber :: GenRE l s a -> GenRE l s a
 renumber e = flip evalState (ThreadId 1) $ go e
   where
-    go :: RE l s a -> State ThreadId (RE l s a)
+    go :: GenRE l s a -> State ThreadId (GenRE l s a)
     go e =
         case e of
             Eps -> return Eps

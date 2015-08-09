@@ -36,7 +36,7 @@ re1 =
         two = pure 2 <* sym 'a' <* sym 'a'
     in (,) <$> (one <|> two) <*> (two <|> one)
 
-re1LL :: RE l Char (Int, Int)
+re1LL :: GenRE l Char (Int, Int)
 re1LL =
     let one = pure 1 <* LL.sym 'a'
         two = pure 2 <* LL.sym 'a' <* LL.sym 'a'
