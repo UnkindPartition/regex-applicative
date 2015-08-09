@@ -1,11 +1,14 @@
 {-# LANGUAGE OverloadedStrings, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
 import Text.Regex.Applicative
 import Text.Regex.Applicative.Reference
+import qualified Text.Regex.Applicative.ListLike as LL
 import Control.Applicative
 import Control.Monad
 import Data.Traversable
 import Data.Maybe
 import Text.Printf
+import Data.ListLike (ListLike)
+import Data.Text as T (Text, pack)
 
 import Test.SmallCheck
 import Test.SmallCheck.Series
@@ -31,6 +34,12 @@ instance Monad m => Serial m ABC where
 re1 =
     let one = pure 1 <* sym 'a'
         two = pure 2 <* sym 'a' <* sym 'a'
+    in (,) <$> (one <|> two) <*> (two <|> one)
+
+re1LL :: RE l Char (Int, Int)
+re1LL =
+    let one = pure 1 <* LL.sym 'a'
+        two = pure 2 <* LL.sym 'a' <* LL.sym 'a'
     in (,) <$> (one <|> two) <*> (two <|> one)
 
 re2 = sequenceA $
@@ -73,6 +82,10 @@ prop re f s =
     let fs = map f s in
     reference re fs == (fs =~ re)
 
+propText re f s =
+    let t = T.pack $ map f s in
+    reference re t == (t LL.=~ re)
+
 prop_withMatched =
     let re = withMatched $ many (string "a" <|> string "ba")
     in \str ->
@@ -96,6 +109,9 @@ tests = testGroup "Tests"
        , t "re6" 10 $ prop re6 a
        , t "re7"  7 $ prop re7 abc
        , t "re8"  7 $ prop re8 abc
+       ]
+    , testGroup "Engine tests: Text"
+       [ t "re1" 10 $ propText re1LL a
        ]
     , testGroup "Recognition vs parsing"
        [ t "re1" 10 $ testRecognitionAgainstParsing re1 a
