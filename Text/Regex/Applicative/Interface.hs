@@ -11,7 +11,7 @@ import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Object
 import Prelude hiding (foldl, null, head, tail)
 import Data.ListLike (FoldableLL, foldl, ListLike, null, head, tail, fromList)
---import Data.Text (Text)
+import Data.Text (Text)
 
 instance Functor (GenRE l s) where
     fmap f x = Fmap f x
@@ -147,6 +147,7 @@ match re = let obj = compile re in \str ->
     results $
     foldl (flip step) obj str
 {- SPECIALIZE match RE s a -> [s] -> Maybe a -}
+{- SPECIALIZE match TRE a -> Text -> Maybe a -}
 
 -- | Find a string prefix which is matched by the regular expression.
 --
@@ -185,6 +186,7 @@ findFirstPrefix re str = go (compile re) str Nothing
                         Nothing -> res
                         Just (s, ss) -> go (step s obj') ss res
 {-# SPECIALIZE findFirstPrefix :: RE s a -> [s] -> Maybe (a, [s]) #-}
+{-# SPECIALIZE findFirstPrefix :: TRE a -> Text -> Maybe (a, Text) #-}
 
 -- | Find the longest string prefix which is matched by the regular expression.
 --
@@ -213,6 +215,7 @@ findLongestPrefix re str = go (compile re) str Nothing
                 Nothing -> res
                 Just (s, ss) -> go (step s obj) ss res
 {-# SPECIALIZE findLongestPrefix :: RE s a -> [s] -> Maybe (a, [s]) #-}
+{-# SPECIALIZE findLongestPrefix :: TRE a -> Text -> Maybe (a, Text) #-}
 
 -- | Find the shortest prefix (analogous to 'findLongestPrefix')
 findShortestPrefix :: ListLike l s => GenRE l s a -> l -> Maybe (a, l)
@@ -227,6 +230,7 @@ findShortestPrefix re str = go (compile re) str
                     Nothing -> Nothing
                     Just (s, ss) -> go (step s obj) ss
 {-# SPECIALIZE findShortestPrefix :: RE s a -> [s] -> Maybe (a, [s]) #-}
+{-# SPECIALIZE findShortestPrefix :: TRE a -> Text -> Maybe (a, Text) #-}
 
 -- | Find the leftmost substring that is matched by the regular expression.
 -- Otherwise behaves like 'findFirstPrefix'. Returns the result together with
@@ -236,6 +240,7 @@ findFirstInfix re str =
     fmap (\((first, res), last) -> (fromList first, res, last)) $
     findFirstPrefix ((,) <$> few anySym <*> re) str
 {-# SPECIALIZE findFirstInfix :: RE s a -> [s] -> Maybe ([s], a, [s]) #-}
+{-# SPECIALIZE findFirstInfix :: TRE a -> Text -> Maybe (Text, a, Text) #-}
 
 -- Auxiliary function for findExtremeInfix
 prefixCounter :: ListLike l s => GenRE l s (Int, l)
@@ -338,6 +343,7 @@ findExtremalInfix newOrOld re str =
 findLongestInfix :: ListLike l s => GenRE l s a -> l -> Maybe (l, a, l)
 findLongestInfix = findExtremalInfix preferOver
 {-# SPECIALIZE findLongestInfix :: RE s a -> [s] -> Maybe ([s], a, [s]) #-}
+{-# SPECIALIZE findLongestInfix :: TRE a -> Text -> Maybe (Text, a, Text) #-}
 
 -- | Find the leftmost substring that is matched by the regular expression.
 -- Otherwise behaves like 'findShortestPrefix'. Returns the result together with
@@ -345,3 +351,4 @@ findLongestInfix = findExtremalInfix preferOver
 findShortestInfix :: ListLike l s => GenRE l s a -> l -> Maybe (l, a, l)
 findShortestInfix = findExtremalInfix $ flip preferOver
 {-# SPECIALIZE findShortestInfix :: RE s a -> [s] -> Maybe ([s], a, [s]) #-}
+{-# SPECIALIZE findShortestInfix :: TRE a -> Text -> Maybe (Text, a, Text) #-}
