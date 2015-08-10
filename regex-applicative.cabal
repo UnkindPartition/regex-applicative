@@ -1,7 +1,7 @@
 Name:                regex-applicative
 Version:             0.3.2.1
 Synopsis:            Regex-based parsing with applicative interface
-Description:         
+Description:
     regex-applicative is a Haskell library for parsing using regular expressions.
     Parsers can be built using Applicative interface.
 Homepage:            https://github.com/feuerbach/regex-applicative
@@ -36,6 +36,17 @@ Library
                    -fno-warn-name-shadowing
                    -fno-warn-missing-signatures
                    -fno-warn-orphans
+
+Benchmark benchmark-regex-applicative
+  type:       exitcode-stdio-1.0
+  hs-source-dirs:
+    benchmark
+  main-is:
+    benchmark.hs
+  Default-language:    Haskell2010
+  Build-depends:       base < 5,
+                       criterion,
+                       regex-applicative
 
 Test-Suite test-regex-applicative
   type:       exitcode-stdio-1.0
