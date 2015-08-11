@@ -328,3 +328,13 @@ findLongestInfix = findExtremalInfix preferOver
 -- the prefix and suffix of the string surrounding the match.
 findShortestInfix :: RE s a -> [s] -> Maybe ([s], a, [s])
 findShortestInfix = findExtremalInfix $ flip preferOver
+
+-- | Replace matches of the regular expression with its value.
+--
+-- >Text.Regex.Applicative > replace ("!" <$ sym 'f' <* some (sym 'o')) "quuxfoofooooofoobarfobar"
+-- >"quux!!!bar!bar"
+replace :: RE s [s] -> [s] -> [s]
+replace r = ($ []) . go
+  where go ys = case findLongestInfix r ys of
+                    Nothing                -> (ys ++)
+                    Just (before, m, rest) -> (before ++) . (m ++) . go rest

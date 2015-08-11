@@ -174,6 +174,20 @@ tests = testGroup "Tests"
                 (findShortestInfix "bc" "tabc")
                 (Just ("ta", "bc",""))
             ]
+        , testGroup "replace"
+            [ u "t1"
+                (replace ("x" <$ "a" <|> "y" <$ "ab") "tabc")
+                "tyc"
+            , u "t2"
+                (replace ("y" <$ "ab" <|> "x" <$ "a") "tabc")
+                "tyc"
+            , u "t3"
+                (replace ("x" <$ "bc") "tabc")
+                "tax"
+            , u "t4"
+                (replace ("y" <$ "a" <|> "x" <$ "ab") "tacabc")
+                "tycxc"
+            ]
         ]
     , stateQueueTests
     ]
