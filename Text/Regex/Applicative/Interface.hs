@@ -26,6 +26,10 @@ instance Alternative (RE s) where
     many a = reverse <$> Rep Greedy (flip (:)) [] a
     some a = (:) <$> a <*> many a
 
+instance Monoid a => Monoid (RE s a) where
+    mempty  = pure mempty
+    mappend = liftA2 mappend
+
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string
 

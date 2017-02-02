@@ -3,8 +3,9 @@
 module Text.Regex.Applicative.Types where
 
 import Control.Applicative
--- The above import is needed for haddock to properly generate links to
--- Applicative methods. But it's not actually used in the code, hence
+import Data.Monoid
+-- The above imports are needed for haddock to properly generate links to
+-- Applicative/Monoid methods. But it's not actually used in the code, hence
 -- -fno-warn-unused-imports.
 
 
@@ -31,8 +32,8 @@ data Greediness = Greedy | NonGreedy
 -- | Type of regular expressions that recognize symbols of type @s@ and
 -- produce a result of type @a@.
 --
--- Regular expressions can be built using 'Functor', 'Applicative' and
--- 'Alternative' instances in the following natural way:
+-- Regular expressions can be built using 'Functor', 'Applicative',
+-- 'Alternative', and 'Monoid' instances in the following natural way:
 --
 -- * @f@ '<$>' @ra@ matches iff @ra@ matches, and its return value is the result
 -- of applying @f@ to the return value of @ra@.
@@ -55,6 +56,11 @@ data Greediness = Greedy | NonGreedy
 --
 -- * 'some' @ra@ matches concatenation of one or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
+--
+-- * @ra@ '<>' @rb@ matches a string iff it is a concatenation of two
+-- strings: one matched by @ra@ and the other matched by @rb@. The return value
+-- is @a <> b@, where @a@ and @b@ are the return values of @ra@ and @rb@
+-- respectively.
 data RE s a where
     Eps :: RE s ()
     Symbol :: ThreadId -> (s -> Maybe a) -> RE s a
