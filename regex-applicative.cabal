@@ -31,8 +31,7 @@ Library
   Other-modules:       Text.Regex.Applicative.Interface
                        Text.Regex.Applicative.Types
                        Text.Regex.Applicative.Compile
-  GHC-Options:     -O2
-                   -Wall
+  GHC-Options:     -Wall
                    -fno-warn-name-shadowing
                    -fno-warn-missing-signatures
                    -fno-warn-orphans
