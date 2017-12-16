@@ -54,3 +54,12 @@ Test-Suite test-regex-applicative
                        tasty-smallcheck,
                        tasty-hunit,
                        regex-applicative
+
+Benchmark bench-regex-applicative
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: benchmark
+  main-is:        benchmark.hs
+  build-depends:  base <5
+                , criterion
+                , regex-applicative
+  ghc-options:    -O2 -threaded
