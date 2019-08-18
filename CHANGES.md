@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.3.3.1
+-------
+
+Make a release to refresh the haddocks on hackage
+(see <https://github.com/feuerbach/regex-applicative/issues/35>).
+
 0.3.3
 -----
 
