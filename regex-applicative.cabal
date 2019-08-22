@@ -62,4 +62,11 @@ Benchmark bench-regex-applicative
   build-depends:  base <5
                 , criterion
                 , regex-applicative
+                , parsers
+                , parsec
+                , attoparsec
+                , megaparsec
+                , parsers-megaparsec
+                , deepseq
+                , bytestring
   default-language: Haskell2010
