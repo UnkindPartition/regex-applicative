@@ -3,7 +3,6 @@ module Text.Regex.Applicative.Compile (compile) where
 
 import Control.Monad.Trans.State
 import Text.Regex.Applicative.Types
-import Control.Applicative
 import Data.Maybe
 import qualified Data.IntMap as IntMap
 
@@ -29,15 +28,6 @@ nonEmptyCont k =
         SingleCont a -> a
         EmptyNonEmpty _ a -> a
 
--- The whole point of this module is this function, compile2, which needs to be
--- compiled with -fno-do-lambda-eta-expansion for efficiency.
---
--- Since this option would make other code perform worse, we place this
--- function in a separate module and make sure it's not inlined.
---
--- The point of "-fno-do-lambda-eta-expansion" is to make sure the tree is
--- "compiled" only once.
---
 -- compile2 function takes two continuations: one when the match is empty and
 -- one when the match is non-empty. See the "Rep" case for the reason.
 compile2 :: RE s a -> Cont (a -> [Thread s r]) -> [Thread s r]
@@ -130,6 +120,7 @@ compile2_ e =
 
     in \k -> concatMap (mkThread (emptyCont k) (nonEmptyCont k)) entries
 
+combine :: Greediness -> [a] -> [a] -> [a]
 combine g continue stop =
     case g of
         Greedy -> continue ++ stop

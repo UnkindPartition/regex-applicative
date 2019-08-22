@@ -34,7 +34,6 @@ import qualified Text.Regex.Applicative.Compile as Compile
 import Data.Maybe
 import Data.Foldable as F
 import Control.Monad.Trans.State
-import Control.Applicative hiding (empty)
 
 -- | The state of the engine is represented as a \"regex object\" of type
 -- @'ReObject' s r@, where @s@ is the type of symbols and @r@ is the

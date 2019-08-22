@@ -1,5 +1,6 @@
 -- | This internal module is exposed only for testing and benchmarking. You
 -- don't need to import it.
+{-# LANGUAGE RecordWildCards #-}
 module Text.Regex.Applicative.StateQueue
     ( StateQueue
     , empty

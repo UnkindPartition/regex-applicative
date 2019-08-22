@@ -33,8 +33,6 @@ Library
                        Text.Regex.Applicative.Compile
   GHC-Options:     -Wall
                    -fno-warn-name-shadowing
-                   -fno-warn-missing-signatures
-                   -fno-warn-orphans
 
 Test-Suite test-regex-applicative
   type:       exitcode-stdio-1.0

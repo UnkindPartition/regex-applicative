@@ -1,12 +1,8 @@
 {-# LANGUAGE GADTs #-}
-{-# OPTIONS_GHC -fno-do-lambda-eta-expansion -fno-warn-unused-imports #-}
 module Text.Regex.Applicative.Types where
 
 import Control.Applicative
--- The above import is needed for haddock to properly generate links to
--- Applicative methods. But it's not actually used in the code, hence
--- -fno-warn-unused-imports.
-
+import Data.String
 
 newtype ThreadId = ThreadId Int
 
@@ -69,3 +65,52 @@ data RE s a where
         -> RE s a
         -> RE s b
     Void :: RE s a -> RE s ()
+
+instance Functor (RE s) where
+    fmap f x = Fmap f x
+    f <$ x = pure f <* x
+
+instance Applicative (RE s) where
+    pure x = const x <$> Eps
+    a1 <*> a2 = App a1 a2
+    a *> b = pure (const id) <*> Void a <*> b
+    a <* b = pure const <*> a <*> Void b
+
+instance Alternative (RE s) where
+    a1 <|> a2 = Alt a1 a2
+    empty = Fail
+    many a = reverse <$> Rep Greedy (flip (:)) [] a
+    some a = (:) <$> a <*> many a
+
+instance (char ~ Char, string ~ String) => IsString (RE char string) where
+    fromString = string
+
+-- | Match and return the given sequence of symbols.
+--
+-- Note that there is an 'IsString' instance for regular expression, so
+-- if you enable the @OverloadedStrings@ language extension, you can write
+-- @string \"foo\"@ simply as @\"foo\"@.
+--
+-- Example:
+--
+-- >{-# LANGUAGE OverloadedStrings #-}
+-- >import Text.Regex.Applicative
+-- >
+-- >number = "one" *> pure 1  <|>  "two" *> pure 2
+-- >
+-- >main = print $ "two" =~ number
+string :: Eq a => [a] -> RE a [a]
+string = traverse sym
+
+-- | Match and return a single symbol which satisfies the predicate
+psym :: (s -> Bool) -> RE s s
+psym p = msym (\s -> if p s then Just s else Nothing)
+
+-- | Like 'psym', but allows to return a computed value instead of the
+-- original symbol
+msym :: (s -> Maybe a) -> RE s a
+msym p = Symbol (error "Not numbered symbol") p
+
+-- | Match and return the given symbol
+sym :: Eq s => s -> RE s s
+sym s = psym (s ==)
