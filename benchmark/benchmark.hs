@@ -1,9 +1,8 @@
-{-# LANGUAGE FlexibleInstances, TypeApplications, RankNTypes #-}
+{-# LANGUAGE FlexibleInstances, TypeApplications, RankNTypes, CPP #-}
 import Data.List
 import Data.Traversable
 import Data.Maybe
 import Data.Void
-import Control.DeepSeq
 import Control.Monad
 
 import Criterion.Main
@@ -11,11 +10,14 @@ import Criterion.Main
 import Text.Regex.Applicative
 import qualified Text.Parser.Combinators as PC
 import qualified Text.Parser.Char as PC
+import Control.DeepSeq
+#ifdef COMPARE
 import qualified Text.Parsec as Parsec
 import qualified Text.Megaparsec as Megaparsec
 import qualified Text.Megaparsec.Parsers as MP
 import qualified Data.Attoparsec.ByteString.Char8 as Attoparsec
 import qualified Data.ByteString.Char8 as BS8
+#endif
 
 parser1 :: PC.CharParsing f => f [String]
 parser1 = many $
@@ -32,9 +34,11 @@ benchmarkParser
   -> [Benchmark]
 benchmarkParser parser =
     [ bench "regex-applicative" $ nf (match parser) str
+#ifdef COMPARE
     , bench "parsec" $ nf (Parsec.parse parser "-") str
     , bench "megaparsec" $ nf (Megaparsec.parseMaybe @Void (MP.unParsecT parser)) str
     , bench "attoparsec" $ nf (Attoparsec.parseOnly parser) (BS8.pack str)
+#endif
     ]
 
 main = defaultMain $
@@ -54,5 +58,7 @@ instance PC.CharParsing (RE Char) where
   char = sym
   anyChar = anySym
   string = string
+#ifdef COMPARE
 instance NFData Parsec.ParseError where
   rnf = flip seq ()
+#endif

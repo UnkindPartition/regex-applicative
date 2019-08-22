@@ -55,6 +55,14 @@ Test-Suite test-regex-applicative
                        tasty-hunit,
                        regex-applicative
 
+-- The main reason for this flag is to make running with different ghc
+-- versions and stackage snapshots easier on the CI, especially given that
+-- parsers-megaparsec is not part of stackage.
+flag compare
+  description: Compare regex-applicative to parsec when running the benchmark
+  default: false
+  manual: true
+
 Benchmark bench-regex-applicative
   type:           exitcode-stdio-1.0
   hs-source-dirs: benchmark
@@ -63,10 +71,13 @@ Benchmark bench-regex-applicative
                 , criterion
                 , regex-applicative
                 , parsers
-                , parsec
+                , deepseq
+  if flag(compare)
+    cpp-options: -DCOMPARE
+    build-depends:
+                  parsec
                 , attoparsec
                 , megaparsec
                 , parsers-megaparsec
-                , deepseq
                 , bytestring
   default-language: Haskell2010

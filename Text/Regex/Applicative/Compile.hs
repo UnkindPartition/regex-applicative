@@ -1,5 +1,4 @@
 {-# LANGUAGE GADTs #-}
-{-# OPTIONS_GHC -fno-do-lambda-eta-expansion #-}
 module Text.Regex.Applicative.Compile (compile) where
 
 import Control.Monad.Trans.State
@@ -82,7 +81,7 @@ compile2 e =
 
 data FSMState
     = SAccept
-    | STransition ThreadId
+    | STransition !ThreadId
 
 type FSMMap s = IntMap.IntMap (s -> Bool, [FSMState])
 

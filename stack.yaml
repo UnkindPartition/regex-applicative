@@ -1,6 +1,5 @@
 flags: {}
 packages:
 - '.'
-extra-deps:
-- parsers-megaparsec-0.1.0.1
+extra-deps: []
 resolver: nightly-2019-06-12
