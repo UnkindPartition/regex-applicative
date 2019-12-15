@@ -2,6 +2,8 @@
 module Text.Regex.Applicative.Interface where
 import Control.Applicative hiding (empty)
 import Control.Arrow
+import Control.Monad (guard)
+import qualified Data.List as List
 import Data.Maybe
 import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Object
@@ -94,6 +96,8 @@ match re = let obj = compile re in \str ->
 --
 -- If match is found, the rest of the input is also returned.
 --
+-- See also 'findFirstPrefixWithUncons', of which this is a special case.
+--
 -- Examples:
 --
 -- >Text.Regex.Applicative> findFirstPrefix ("a" <|> "ab") "abc"
@@ -103,23 +107,17 @@ match re = let obj = compile re in \str ->
 -- >Text.Regex.Applicative> findFirstPrefix "bc" "abc"
 -- >Nothing
 findFirstPrefix :: RE s a -> [s] -> Maybe (a, [s])
-findFirstPrefix re str = go (compile re) str Nothing
-    where
+findFirstPrefix = findFirstPrefixWithUncons List.uncons
+
+-- | Find the first prefix, with the given @uncons@ function.
+findFirstPrefixWithUncons :: (ss -> Maybe (s, ss)) -> RE s a -> ss -> Maybe (a, ss)
+findFirstPrefixWithUncons = findPrefixWith' (walk emptyObject . threads)
+  where
     walk obj [] = (obj, Nothing)
     walk obj (t:ts) =
         case getResult t of
             Just r -> (obj, Just r)
             Nothing -> walk (addThread t obj) ts
-
-    go obj str resOld =
-        case walk emptyObject $ threads obj of
-            (obj', resThis) ->
-                let res = ((flip (,) str) <$> resThis) <|> resOld
-                in
-                    case str of
-                        _ | failed obj' -> res
-                        [] -> res
-                        (s:ss) -> go (step s obj') ss res
 
 -- | Find the longest string prefix which is matched by the regular expression.
 --
@@ -127,6 +125,8 @@ findFirstPrefix re str = go (compile re) str Nothing
 -- different from POSIX semantics.
 --
 -- If match is found, the rest of the input is also returned.
+--
+-- See also 'findLongestPrefixWithUncons', of which this is a special case.
 --
 -- Examples:
 --
@@ -138,28 +138,45 @@ findFirstPrefix re str = go (compile re) str Nothing
 -- >Text.Regex.Applicative Data.Char> findLongestPrefix lexeme "iffoo"
 -- >Just (Right "iffoo","")
 findLongestPrefix :: RE s a -> [s] -> Maybe (a, [s])
-findLongestPrefix re str = go (compile re) str Nothing
-    where
-    go obj str resOld =
-        let res = (fmap (flip (,) str) $ listToMaybe $ results obj) <|> resOld
-        in
-            case str of
-                _ | failed obj -> res
-                [] -> res
-                (s:ss) -> go (step s obj) ss res
+findLongestPrefix = findLongestPrefixWithUncons List.uncons
+
+-- | Find the longest prefix, with the given @uncons@ function.
+findLongestPrefixWithUncons :: (ss -> Maybe (s, ss)) -> RE s a -> ss -> Maybe (a, ss)
+findLongestPrefixWithUncons = findPrefixWith' ((,) <*> listToMaybe . results)
+
+findPrefixWith'
+ :: (ReObject s a -> (ReObject s a, Maybe a))
+ -- ^ Given the regex object, compute the regex object to feed the next input value into, and
+ -- the result, if any.
+ -> (ss -> Maybe (s, ss)) -- ^ @uncons@
+ -> RE s a -> ss -> Maybe (a, ss)
+findPrefixWith' walk uncons = \ re -> go (compile re) Nothing
+  where
+    go obj resOld ss = case walk obj of
+        (obj', resThis) ->
+            let res = flip (,) ss <$> resThis <|> resOld
+            in
+                case uncons ss of
+                    _ | failed obj' -> res
+                    Nothing -> res
+                    Just (s, ss) -> go (step s obj') res ss
 
 -- | Find the shortest prefix (analogous to 'findLongestPrefix')
+--
+-- See also 'findShortestPrefixWithUncons', of which this is a special case.
 findShortestPrefix :: RE s a -> [s] -> Maybe (a, [s])
-findShortestPrefix re str = go (compile re) str
-    where
-    go obj str =
-        case results obj of
-            r : _ -> Just (r, str)
-            _ | failed obj -> Nothing
-            _ ->
-                case str of
-                    [] -> Nothing
-                    s:ss -> go (step s obj) ss
+findShortestPrefix = findShortestPrefixWithUncons List.uncons
+
+-- | Find the shortest prefix (analogous to 'findLongestPrefix'), with the given @uncons@ function.
+findShortestPrefixWithUncons :: (ss -> Maybe (s, ss)) -> RE s a -> ss -> Maybe (a, ss)
+findShortestPrefixWithUncons uncons = go . compile
+  where
+    go obj ss = case results obj of
+        r:_ -> Just (r, ss)
+        _ -> do
+            guard (not (failed obj))
+            (s, ss) <- uncons ss
+            go (step s obj) ss
 
 -- | Find the leftmost substring that is matched by the regular expression.
 -- Otherwise behaves like 'findFirstPrefix'. Returns the result together with

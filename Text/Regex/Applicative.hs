@@ -32,9 +32,36 @@ module Text.Regex.Applicative
     , findFirstInfix
     , findLongestInfix
     , findShortestInfix
+    -- $uncons
+    , findFirstPrefixWithUncons
+    , findLongestPrefixWithUncons
+    , findShortestPrefixWithUncons
     , module Control.Applicative
     )
     where
 import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Interface
 import Control.Applicative
+
+{- $uncons
+The following terms take an argument which, given the input, computes the next input symbol and
+the remaining input (if the input is non-empty).
+
+It is useful, for example, for feeding a `Text` to a regex matcher:
+
+>>> findFirstPrefixWithUncons Text.uncons (many (sym 'a')) "aaa"
+Just ("aaa", "")
+
+For another example, feeding input symbols annotated with source positions into a matcher,
+preserving the positions in the remaining input so the location of a lexical error can be
+recovered:
+
+@
+data AList a b = AList { annotation :: a, stripAnnotation :: Maybe (b, AList a b) }
+
+findLongestPrefixAnnotated :: RE s a -> AList b s -> Maybe (a, AList b s)
+fondLongestPrefixAnnotated = findLongestPrefixWithUncons stripAnnotation
+@
+
+The use of the other functions taking an @uncons@ argument is exactly analogous.
+-}
