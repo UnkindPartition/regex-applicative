@@ -3,6 +3,7 @@ import Text.Regex.Applicative
 import Text.Regex.Applicative.Reference
 import Control.Applicative
 import Control.Monad
+import Data.Filtrable
 import Data.Traversable
 import Data.Maybe
 import Text.Printf
@@ -69,6 +70,8 @@ re8 = (,) <$> many (sym 'a' <|> sym 'b') <*> many (sym 'b' <|> sym 'c')
 re9 = many (sym 'a' <|> empty) <* sym 'b'
 re10 = few (sym 'a' <|> empty) <* sym 'b'
 
+re11 = (\ a b -> a <$ guard (a == b)) <$> anySym <*?> anySym
+
 prop re f s =
     let fs = map f s in
     reference re fs == (fs =~ re)
@@ -88,14 +91,15 @@ testRecognitionAgainstParsing re f s =
 
 tests = testGroup "Tests"
     [ testGroup "Engine tests"
-       [ t "re1" 10 $ prop re1 a
-       , t "re2" 10 $ prop re2 ab
-       , t "re3" 10 $ prop re3 ab
-       , t "re4" 10 $ prop re4 ab
-       , t "re5" 10 $ prop re5 a
-       , t "re6" 10 $ prop re6 a
-       , t "re7"  7 $ prop re7 abc
-       , t "re8"  7 $ prop re8 abc
+       [ t "re1" 10 $ prop re1  a
+       , t "re2" 10 $ prop re2  ab
+       , t "re3" 10 $ prop re3  ab
+       , t "re4" 10 $ prop re4  ab
+       , t "re5" 10 $ prop re5  a
+       , t "re6" 10 $ prop re6  a
+       , t "re7"  7 $ prop re7  abc
+       , t "re8"  7 $ prop re8  abc
+       , t "re11" 7 $ prop re11 abc
        ]
     , testGroup "Recognition vs parsing"
        [ t "re1" 10 $ testRecognitionAgainstParsing re1 a
@@ -108,6 +112,7 @@ tests = testGroup "Tests"
        , t "re8"  7 $ testRecognitionAgainstParsing re8 abc
        , t "re8" 10 $ testRecognitionAgainstParsing re9 ab
        , t "re8" 10 $ testRecognitionAgainstParsing re10 ab
+       , t "re11" 7 $ testRecognitionAgainstParsing re11 abc
        ]
     , testProperty "withMatched" prop_withMatched
     , testGroup "Tests for matching functions"

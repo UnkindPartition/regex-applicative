@@ -1,10 +1,13 @@
 {-# LANGUAGE GADTs #-}
 module Text.Regex.Applicative.Compile (compile) where
 
+import Control.Monad ((<=<))
 import Control.Monad.Trans.State
-import Text.Regex.Applicative.Types
+import Data.Foldable
 import Data.Maybe
+import Data.Monoid (Any (..))
 import qualified Data.IntMap as IntMap
+import Text.Regex.Applicative.Types
 
 compile :: RE s a -> (a -> [Thread s r]) -> [Thread s r]
 compile e k = compile2 e (SingleCont k)
@@ -57,6 +60,7 @@ compile2 e =
             in \k -> a1 k ++ a2 k
         Fail -> const []
         Fmap f n -> let a = compile2 n in \k -> a $ fmap (. f) k
+        CatMaybes n -> let a = compile2 n in \k -> a $ (<=< toList) <$> k
         -- This is actually the point where we use the difference between
         -- continuations. For the inner RE the empty continuation is a
         -- "failing" one in order to avoid non-termination.
@@ -67,7 +71,9 @@ compile2 e =
                         (a $ EmptyNonEmpty (\_ -> []) (\v -> let b' = f b v in threads b' (SingleCont $ nonEmptyCont k)))
                         (emptyCont k b)
             in threads b
-        Void n -> let a = compile2_ n in \k -> a $ fmap ($ ()) k
+        Void n
+          | hasCatMaybes n -> compile2 n . fmap (. \ _ -> ())
+          | otherwise -> compile2_ n . fmap ($ ())
 
 data FSMState
     = SAccept
@@ -92,6 +98,7 @@ mkNFA e =
         Alt n1 n2 -> (++) <$> go n1 k <*> go n2 k
         Fail -> return []
         Fmap _ n -> go n k
+        CatMaybes _ -> error "mkNFA CatMaybes"
         Rep g _ _ n ->
             let entries = findEntries n
                 cont = combine g entries k
@@ -106,6 +113,9 @@ mkNFA e =
     -- A simple (although a bit inefficient) way to find all entry points is
     -- just to use 'go'
     evalState (go e []) IntMap.empty
+
+hasCatMaybes :: RE s a -> Bool
+hasCatMaybes = getAny . foldMapPostorder (Any . \ case CatMaybes _ -> True; _ -> False)
 
 compile2_ :: RE s a -> Cont [Thread s r] -> [Thread s r]
 compile2_ e =

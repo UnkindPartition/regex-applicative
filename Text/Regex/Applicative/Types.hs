@@ -1,7 +1,12 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Text.Regex.Applicative.Types where
 
 import Control.Applicative
+import Control.Monad ((<=<))
+import Data.Filtrable (Filtrable (..))
+import Data.Functor.Identity (Identity (..))
 import Data.String
 
 newtype ThreadId = ThreadId Int
@@ -27,8 +32,8 @@ data Greediness = Greedy | NonGreedy
 -- | Type of regular expressions that recognize symbols of type @s@ and
 -- produce a result of type @a@.
 --
--- Regular expressions can be built using 'Functor', 'Applicative' and
--- 'Alternative' instances in the following natural way:
+-- Regular expressions can be built using 'Functor', 'Applicative',
+-- 'Alternative', and 'Filtrable' instances in the following natural way:
 --
 -- * @f@ '<$>' @ra@ matches iff @ra@ matches, and its return value is the result
 -- of applying @f@ to the return value of @ra@.
@@ -51,12 +56,15 @@ data Greediness = Greedy | NonGreedy
 --
 -- * 'some' @ra@ matches concatenation of one or more strings matched by @ra@
 -- and returns the list of @ra@'s return values on those strings.
+--
+-- * 'catMaybes' @ram@ matches iff @ram@ matches and produces 'Just _'.
 data RE s a where
     Eps :: RE s ()
     Symbol :: ThreadId -> (s -> Maybe a) -> RE s a
     Alt :: RE s a -> RE s a -> RE s a
     App :: RE s (a -> b) -> RE s a -> RE s b
     Fmap :: (a -> b) -> RE s a -> RE s b
+    CatMaybes :: RE s (Maybe a) -> RE s a
     Fail :: RE s a
     Rep :: Greediness    -- repetition may be greedy or not
         -> (b -> a -> b) -- folding function (like in foldl)
@@ -65,6 +73,30 @@ data RE s a where
         -> RE s a
         -> RE s b
     Void :: RE s a -> RE s ()
+
+-- | Traverse each (reflexive, transitive) subexpression of a 'RE', depth-first and post-order.
+traversePostorder :: forall s a m . Monad m => (forall a . RE s a -> m (RE s a)) -> RE s a -> m (RE s a)
+traversePostorder f = go
+  where
+    go :: forall a . RE s a -> m (RE s a)
+    go = f <=< \ case
+        Eps -> pure Eps
+        Symbol i p -> pure (Symbol i p)
+        Alt a b -> Alt <$> go a <*> go b
+        App a b -> App <$> go a <*> go b
+        Fmap g a -> Fmap g <$> go a
+        CatMaybes a -> CatMaybes <$> go a
+        Fail -> pure Fail
+        Rep greed g b a -> Rep greed g b <$> go a
+        Void a -> Void <$> go a
+
+-- | Fold each (reflexive, transitive) subexpression of a 'RE', depth-first and post-order.
+foldMapPostorder :: Monoid b => (forall a . RE s a -> b) -> RE s a -> b
+foldMapPostorder f = fst . traversePostorder ((,) <$> f <*> id)
+
+-- | Map each (reflexive, transitive) subexpression of a 'RE'.
+mapRE :: (forall a . RE s a -> RE s a) -> RE s a -> RE s a
+mapRE f = runIdentity . traversePostorder (Identity . f)
 
 instance Functor (RE s) where
     fmap f x = Fmap f x
@@ -81,6 +113,9 @@ instance Alternative (RE s) where
     empty = Fail
     many a = reverse <$> Rep Greedy (flip (:)) [] a
     some a = (:) <$> a <*> many a
+
+instance Filtrable (RE s) where
+    catMaybes = CatMaybes
 
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string

@@ -19,6 +19,7 @@ comap f re =
     Alt r1 r2     -> Alt (comap f r1) (comap f r2)
     App r1 r2     -> App (comap f r1) (comap f r2)
     Fmap g r      -> Fmap g (comap f r)
+    CatMaybes r   -> CatMaybes (comap f r)
     Fail          -> Fail
     Rep gr fn a r -> Rep gr fn a (comap f r)
     Void r        -> Void (comap f r)
@@ -60,6 +61,8 @@ withMatched (App a b) =
         withMatched b
 withMatched Fail = Fail
 withMatched (Fmap f x) = (f *** id) <$> withMatched x
+withMatched (CatMaybes x) = CatMaybes $
+    (\ (as, s) -> flip (,) s <$> as) <$> withMatched x
 withMatched (Rep gr f a0 x) =
     Rep gr (\(a, s) (x, t) -> (f a x, s ++ t)) (a0, []) (withMatched x)
 -- N.B.: this ruins the Void optimization

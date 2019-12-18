@@ -115,19 +115,9 @@ compile =
     renumber
 
 renumber :: RE s a -> RE s a
-renumber e = flip evalState (ThreadId 1) $ go e
-  where
-    go :: RE s a -> State ThreadId (RE s a)
-    go e =
-        case e of
-            Eps -> return Eps
-            Symbol _ p -> Symbol <$> fresh <*> pure p
-            Alt a1 a2 -> Alt <$> go a1 <*> go a2
-            App a1 a2 -> App <$> go a1 <*> go a2
-            Fail -> return Fail
-            Fmap f a -> Fmap f <$> go a
-            Rep g f b a -> Rep g f b <$> go a
-            Void a -> Void <$> go a
+renumber =
+    flip evalState (ThreadId 1) .
+    traversePostorder (\ case Symbol _ p -> flip Symbol p <$> fresh; a -> pure a)
 
 fresh :: State ThreadId ThreadId
 fresh = do
