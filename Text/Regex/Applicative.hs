@@ -32,6 +32,7 @@ module Text.Regex.Applicative
     , findFirstInfix
     , findLongestInfix
     , findShortestInfix
+    -- * Custom uncons function
     -- $uncons
     , findFirstPrefixWithUncons
     , findLongestPrefixWithUncons
@@ -44,10 +45,10 @@ import Text.Regex.Applicative.Interface
 import Control.Applicative
 
 {- $uncons
-The following terms take an argument which, given the input, computes the next input symbol and
+The following functions take an argument that splits the input into the first symbol and
 the remaining input (if the input is non-empty).
 
-It is useful, for example, for feeding a `Text` to a regex matcher:
+It is useful, for example, for feeding a @Text@ to a regex matcher:
 
 >>> findFirstPrefixWithUncons Text.uncons (many (sym 'a')) "aaa"
 Just ("aaa", "")
