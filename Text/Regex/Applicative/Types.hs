@@ -58,6 +58,12 @@ data Greediness = Greedy | NonGreedy
 -- and returns the list of @ra@'s return values on those strings.
 --
 -- * 'catMaybes' @ram@ matches iff @ram@ matches and produces 'Just _'.
+--
+-- * @ra@ '<>' @rb@ matches @ra@ followed by @rb@. The return value is @a <> b@,
+-- where @a@ and @b@ are the return values of @ra@ and @rb@ respectively.
+--
+-- * 'mempty' matches the empty string (i.e. it does not consume any symbols),
+-- and its return value is the 'mempty' value of type @a@.
 data RE s a where
     Eps :: RE s ()
     Symbol :: ThreadId -> (s -> Maybe a) -> RE s a
@@ -119,6 +125,12 @@ instance Filtrable (RE s) where
 
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string
+
+instance Semigroup a => Semigroup (RE s a) where
+    x <> y = (<>) <$> x <*> y
+
+instance Monoid a => Monoid (RE s a) where
+    mempty = pure mempty
 
 -- | Match and return the given sequence of symbols.
 --
