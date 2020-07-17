@@ -63,7 +63,7 @@ data Greediness = Greedy | NonGreedy
 -- where @a@ and @b@ are the return values of @ra@ and @rb@ respectively.
 --
 -- * 'mempty' matches the empty string (i.e. it does not consume any symbols),
--- and its return value is the string type's 'mempty' value.
+-- and its return value is the 'mempty' value of type @a@.
 data RE s a where
     Eps :: RE s ()
     Symbol :: ThreadId -> (s -> Maybe a) -> RE s a
