@@ -62,7 +62,8 @@ data Greediness = Greedy | NonGreedy
 -- * @ra@ '<>' @rb@ matches @ra@ followed by @rb@. The return value is @a <> b@,
 -- where @a@ and @b@ are the return values of @ra@ and @rb@ respectively.
 --
--- * 'mempty' matches the empty string (i.e. it does not consume any symbols).
+-- * 'mempty' matches the empty string (i.e. it does not consume any symbols),
+-- and its return value is the string type's 'mempty' value.
 data RE s a where
     Eps :: RE s ()
     Symbol :: ThreadId -> (s -> Maybe a) -> RE s a
