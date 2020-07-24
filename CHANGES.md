@@ -1,6 +1,13 @@
 Changes
 =======
 
+0.3.4
+-----
+
+* Let the user provide a custom `uncons` function (add
+    `find{First,Longest,Shortest}PrefixWithUncons`)
+* Add `Filtrable` and `Monoid` instances for `RE`
+
 0.3.3.1
 -------
 

@@ -113,6 +113,8 @@ findFirstPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findFirstPrefix = findFirstPrefixWithUncons List.uncons
 
 -- | Find the first prefix, with the given @uncons@ function.
+--
+-- @since 0.3.4
 findFirstPrefixWithUncons :: (ss -> Maybe (s, ss)) -> RE s a -> ss -> Maybe (a, ss)
 findFirstPrefixWithUncons = findPrefixWith' (walk emptyObject . threads)
   where
@@ -144,6 +146,8 @@ findLongestPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findLongestPrefix = findLongestPrefixWithUncons List.uncons
 
 -- | Find the longest prefix, with the given @uncons@ function.
+--
+-- @since 0.3.4
 findLongestPrefixWithUncons :: (ss -> Maybe (s, ss)) -> RE s a -> ss -> Maybe (a, ss)
 findLongestPrefixWithUncons = findPrefixWith' ((,) <*> listToMaybe . results)
 
@@ -171,6 +175,8 @@ findShortestPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findShortestPrefix = findShortestPrefixWithUncons List.uncons
 
 -- | Find the shortest prefix (analogous to 'findLongestPrefix'), with the given @uncons@ function.
+--
+-- @since 0.3.4
 findShortestPrefixWithUncons :: (ss -> Maybe (s, ss)) -> RE s a -> ss -> Maybe (a, ss)
 findShortestPrefixWithUncons uncons = go . compile
   where

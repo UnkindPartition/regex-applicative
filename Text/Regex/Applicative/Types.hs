@@ -126,15 +126,18 @@ instance Alternative (RE s) where
     many a = reverse <$> Rep Greedy (flip (:)) [] a
     some a = (:) <$> a <*> many a
 
+-- | @since 0.3.4
 instance Filtrable (RE s) where
     catMaybes = CatMaybes
 
 instance (char ~ Char, string ~ String) => IsString (RE char string) where
     fromString = string
 
+-- | @since 0.3.4
 instance Semigroup a => Semigroup (RE s a) where
     x <> y = (<>) <$> x <*> y
 
+-- | @since 0.3.4
 instance Monoid a => Monoid (RE s a) where
     mempty = pure mempty
 
