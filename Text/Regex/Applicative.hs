@@ -38,13 +38,11 @@ module Text.Regex.Applicative
     , findLongestPrefixWithUncons
     , findShortestPrefixWithUncons
     , module Control.Applicative
-    , module Data.Filtrable
     )
     where
 import Text.Regex.Applicative.Types
 import Text.Regex.Applicative.Interface
 import Control.Applicative
-import Data.Filtrable
 
 {- $uncons
 The following functions take an argument that splits the input into the first symbol and
