@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 module Text.Regex.Applicative.Types where
 
 import Control.Applicative
@@ -8,6 +9,9 @@ import Control.Monad ((<=<))
 import Data.Filtrable (Filtrable (..))
 import Data.Functor.Identity (Identity (..))
 import Data.String
+#if !MIN_VERSION_base(4,11,0)
+import Data.Semigroup
+#endif
 
 newtype ThreadId = ThreadId Int
 
