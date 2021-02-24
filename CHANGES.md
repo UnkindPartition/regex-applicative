@@ -12,7 +12,7 @@ Changes
 -------
 
 Make a release to refresh the haddocks on hackage
-(see <https://github.com/feuerbach/regex-applicative/issues/35>).
+(see <https://github.com/UnkindPartition/regex-applicative/issues/35>).
 
 0.3.3
 -----

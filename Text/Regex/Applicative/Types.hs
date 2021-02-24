@@ -65,7 +65,7 @@ data Greediness = Greedy | NonGreedy
 --
 -- * @ra@ '<>' @rb@ matches @ra@ followed by @rb@. The return value is @a <> b@,
 -- where @a@ and @b@ are the return values of @ra@ and @rb@ respectively.
--- (See <https://github.com/feuerbach/regex-applicative/issues/37#issue-499781703>
+-- (See <https://github.com/UnkindPartition/regex-applicative/issues/37#issue-499781703>
 -- for an example usage.)
 --
 -- * 'mempty' matches the empty string (i.e. it does not consume any symbols),
