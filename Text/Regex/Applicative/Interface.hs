@@ -43,10 +43,10 @@ reFoldl g f b a = Rep g f b a
 --
 -- Examples:
 --
--- >Text.Regex.Applicative> findFirstPrefix (few anySym  <* "b") "ababab"
--- >Just ("a","abab")
--- >Text.Regex.Applicative> findFirstPrefix (many anySym  <* "b") "ababab"
--- >Just ("ababa","")
+-- >>> findFirstPrefix (few anySym  <* "b") "ababab"
+-- Just ("a","abab")
+-- >>> findFirstPrefix (many anySym  <* "b") "ababab"
+-- Just ("ababa","")
 few :: RE s a -> RE s [a]
 few a = reverse <$> Rep NonGreedy (flip (:)) [] a
 
@@ -78,10 +78,10 @@ infix 2 =~
 --
 -- Examples:
 --
--- >Text.Regex.Applicative> match (sym 'a' <|> sym 'b') "a"
--- >Just 'a'
--- >Text.Regex.Applicative> match (sym 'a' <|> sym 'b') "ab"
--- >Nothing
+-- >>> match (sym 'a' <|> sym 'b') "a"
+-- Just 'a'
+-- >>> match (sym 'a' <|> sym 'b') "ab"
+-- Nothing
 --
 match :: RE s a -> [s] -> Maybe a
 match re = let obj = compile re in \str ->
@@ -103,12 +103,12 @@ match re = let obj = compile re in \str ->
 --
 -- Examples:
 --
--- >Text.Regex.Applicative> findFirstPrefix ("a" <|> "ab") "abc"
--- >Just ("a","bc")
--- >Text.Regex.Applicative> findFirstPrefix ("ab" <|> "a") "abc"
--- >Just ("ab","c")
--- >Text.Regex.Applicative> findFirstPrefix "bc" "abc"
--- >Nothing
+-- >>> findFirstPrefix ("a" <|> "ab") "abc"
+-- Just ("a","bc")
+-- >>> findFirstPrefix ("ab" <|> "a") "abc"
+-- Just ("ab","c")
+-- >>> findFirstPrefix "bc" "abc"
+-- Nothing
 findFirstPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findFirstPrefix = findFirstPrefixWithUncons List.uncons
 
@@ -135,13 +135,14 @@ findFirstPrefixWithUncons = findPrefixWith' (walk emptyObject . threads)
 --
 -- Examples:
 --
--- >Text.Regex.Applicative Data.Char> let keyword = "if"
--- >Text.Regex.Applicative Data.Char> let identifier = many $ psym isAlpha
--- >Text.Regex.Applicative Data.Char> let lexeme = (Left <$> keyword) <|> (Right <$> identifier)
--- >Text.Regex.Applicative Data.Char> findLongestPrefix lexeme "if foo"
--- >Just (Left "if"," foo")
--- >Text.Regex.Applicative Data.Char> findLongestPrefix lexeme "iffoo"
--- >Just (Right "iffoo","")
+-- >>> import Data.Char
+-- >>> let keyword = "if"
+-- >>> let identifier = many $ psym isAlpha
+-- >>> let lexeme = (Left <$> keyword) <|> (Right <$> identifier)
+-- >>> findLongestPrefix lexeme "if foo"
+-- Just (Left "if"," foo")
+-- >>> findLongestPrefix lexeme "iffoo"
+-- Just (Right "iffoo","")
 findLongestPrefix :: RE s a -> [s] -> Maybe (a, [s])
 findLongestPrefix = findLongestPrefixWithUncons List.uncons
 
@@ -304,8 +305,8 @@ findShortestInfix = findExtremalInfix $ flip preferOver
 
 -- | Replace matches of the regular expression with its value.
 --
--- >Text.Regex.Applicative > replace ("!" <$ sym 'f' <* some (sym 'o')) "quuxfoofooooofoobarfobar"
--- >"quux!!!bar!bar"
+-- >>> replace ("!" <$ sym 'f' <* some (sym 'o')) "quuxfoofooooofoobarfobar"
+-- "quux!!!bar!bar"
 replace :: RE s [s] -> [s] -> [s]
 replace r = ($ []) . go
   where go ys = case findLongestInfix r ys of

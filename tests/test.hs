@@ -8,6 +8,7 @@ import Data.Traversable
 import Data.Maybe
 import Text.Printf
 
+import Test.DocTest
 import Test.SmallCheck
 import Test.SmallCheck.Series
 import Test.Tasty
@@ -90,7 +91,13 @@ testRecognitionAgainstParsing re f s =
     isJust (fs =~ re) == isJust (fs =~ (re *> pure ()))
 
 tests = testGroup "Tests"
-    [ testGroup "Engine tests"
+    [ testCase "Documentation tests"
+       (doctest
+        [ "-XLambdaCase"
+        , "-XOverloadedStrings"
+        , "Text/Regex/Applicative.hs"
+        ])
+    , testGroup "Engine tests"
        [ t "re1" 10 $ prop re1  a
        , t "re2" 10 $ prop re2  ab
        , t "re3" 10 $ prop re3  ab

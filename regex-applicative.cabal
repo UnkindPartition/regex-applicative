@@ -55,6 +55,7 @@ Test-Suite test-regex-applicative
   Default-language:    Haskell2010
   Build-depends:       base < 5,
                        containers,
+                       doctest,
                        filtrable >= 0.1.3,
                        transformers,
                        smallcheck >= 1.0,

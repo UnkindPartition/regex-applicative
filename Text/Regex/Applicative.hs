@@ -50,8 +50,9 @@ the remaining input (if the input is non-empty).
 
 It is useful, for example, for feeding a @Text@ to a regex matcher:
 
->>> findFirstPrefixWithUncons Text.uncons (many (sym 'a')) "aaa"
-Just ("aaa", "")
+>>> import qualified Data.Text as T
+>>> findFirstPrefixWithUncons T.uncons (many (sym 'a')) "aaa"
+Just ("aaa","")
 
 For another example, feeding input symbols annotated with source positions into a matcher,
 preserving the positions in the remaining input so the location of a lexical error can be
