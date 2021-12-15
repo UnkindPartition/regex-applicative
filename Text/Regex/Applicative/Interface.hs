@@ -307,8 +307,25 @@ findShortestInfix = findExtremalInfix $ flip preferOver
 --
 -- >>> replace ("!" <$ sym 'f' <* some (sym 'o')) "quuxfoofooooofoobarfobar"
 -- "quux!!!bar!bar"
+{-# DEPRECATED replace "It does not respect non-greedy repetitions, use 'replaceAll' instead." #-}
 replace :: RE s [s] -> [s] -> [s]
 replace r = ($ []) . go
   where go ys = case findLongestInfix r ys of
+                    Nothing                -> (ys ++)
+                    Just (before, m, rest) -> (before ++) . (m ++) . go rest
+
+-- | Replace matches of the regular expression with its value.
+--
+-- >>> replaceAll ("!" <$ sym 'f' <* some (sym 'o')) "quuxfoofooooofoobarfobar"
+-- "quux!!!bar!bar"
+--
+-- >>> replaceAll ("x" <$ string "/*" <* many anySym <* string "*/") "1 /* foo */ 2 /* bar */ 3"
+-- "1 x 3"
+--
+-- >>> replaceAll ("x" <$ string "/*" <* few anySym <* string "*/") "1 /* foo */ 2 /* bar */ 3"
+-- "1 x 2 x 3"
+replaceAll :: RE s [s] -> [s] -> [s]
+replaceAll r = ($ []) . go
+  where go ys = case findFirstInfix r ys of
                     Nothing                -> (ys ++)
                     Just (before, m, rest) -> (before ++) . (m ++) . go rest

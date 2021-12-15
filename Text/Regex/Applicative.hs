@@ -26,6 +26,7 @@ module Text.Regex.Applicative
     , match
     , (=~)
     , replace
+    , replaceAll
     , findFirstPrefix
     , findLongestPrefix
     , findShortestPrefix

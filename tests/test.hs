@@ -200,6 +200,20 @@ tests = testGroup "Tests"
                 (replace ("y" <$ "a" <|> "x" <$ "ab") "tacabc")
                 "tycxc"
             ]
+        , testGroup "replaceAll"
+            [ u "t1"
+                (replaceAll ("x" <$ "a" <|> "y" <$ "ab") "tabc")
+                "txbc"
+            , u "t2"
+                (replaceAll ("y" <$ "ab" <|> "x" <$ "a") "tabc")
+                "tyc"
+            , u "t3"
+                (replaceAll ("x" <$ "bc") "tabc")
+                "tax"
+            , u "t4"
+                (replaceAll ("y" <$ "a" <|> "x" <$ "ab") "tacabc")
+                "tycybc"
+            ]
         ]
     , stateQueueTests
     ]
